@@ -700,7 +700,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                       patch((d) =>
                         d.certifications.push({
                           name: certPreset,
-                          issuer: certPreset.includes("Microsoft") ? "Microsoft" : "Console Flare",
+                          issuer: "",
                           date: "",
                         })
                       );
@@ -720,27 +720,6 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                     value={c.name}
                     onChange={(e) => patch((d) => (d.certifications[i].name = e.target.value))}
                   />
-                  <div className="grid-2">
-                    <div>
-                      <label className="field-label">Issuer</label>
-                      <input
-                        value={c.issuer}
-                        onChange={(e) =>
-                          patch((d) => (d.certifications[i].issuer = e.target.value))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="field-label">Date</label>
-                      <input
-                        type="date"
-                        value={toDateInputValue(c.date)}
-                        onChange={(e) =>
-                          patch((d) => (d.certifications[i].date = e.target.value))
-                        }
-                      />
-                    </div>
-                  </div>
                   <button
                     style={{ marginTop: 8 }}
                     onClick={() => patch((d) => d.certifications.splice(i, 1))}

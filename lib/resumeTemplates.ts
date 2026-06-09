@@ -450,12 +450,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
       .map(
         (cert) => `
                 <div class="cert-row">
-                    <table class="item-table">
-                        <tr>
-                            <td><strong>${_safe(cert.name)}</strong> – ${_safe(cert.issuer)}</td>
-                            <td align="right" class="cert-date">${_safe(cert.date)}</td>
-                        </tr>
-                    </table>
+                    <strong>${_safe(cert.name)}</strong>
                 </div>`
       )
       .join("");
