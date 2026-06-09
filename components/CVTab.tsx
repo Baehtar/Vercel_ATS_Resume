@@ -37,6 +37,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
   const [aiTools, setAiTools] = useState("");
   const [aiClient, setAiClient] = useState("");
   const [presetSelect, setPresetSelect] = useState("");
+  const [certPreset, setCertPreset] = useState("");
 
   const report = useMemo(() => analyzeResume(resume, targetRole), [resume, targetRole]);
   const keywordOptions = useMemo(() => getKeywordOptions(targetRole), [targetRole]);
@@ -680,6 +681,38 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
           <details className="expander">
             <summary>📜 Certifications</summary>
             <div className="expander-body">
+              <label className="field-label">➕ Add from preset</label>
+              <select value={certPreset} onChange={(e) => setCertPreset(e.target.value)}>
+                <option value="">— select a certification —</option>
+                <option value="Data Science With Big Data Engineering + GenAI">Data Science With Big Data Engineering + GenAI</option>
+                <option value="Data Analytics with Power BI">Data Analytics with Power BI</option>
+                <option value="Microsoft Azure Data Fundamentals DP-900">Microsoft Azure Data Fundamentals DP-900</option>
+              </select>
+              {certPreset && (
+                <button
+                  className="primary full"
+                  style={{ marginTop: 8 }}
+                  onClick={() => {
+                    const exists = resume.certifications.some((c) => c.name === certPreset);
+                    if (exists) {
+                      notify("This certification is already in your resume.");
+                    } else {
+                      patch((d) =>
+                        d.certifications.push({
+                          name: certPreset,
+                          issuer: certPreset.includes("Microsoft") ? "Microsoft" : "Console Flare",
+                          date: "",
+                        })
+                      );
+                      notify(`Added: ${certPreset}`);
+                    }
+                    setCertPreset("");
+                  }}
+                >
+                  Add Selected Certification
+                </button>
+              )}
+              <hr />
               {resume.certifications.map((c, i) => (
                 <div key={i}>
                   <label className="field-label">Title</label>
