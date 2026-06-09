@@ -17,6 +17,7 @@ interface Props {
   onIdeal: () => void;
   onSignOut: () => void;
   notify: (text: string) => void;
+  className?: string;
 }
 
 export default function Sidebar({
@@ -29,6 +30,7 @@ export default function Sidebar({
   onIdeal,
   onSignOut,
   notify,
+  className,
 }: Props) {
   const roleKeywords = loadRoleKeywords();
   const roleOptions = Object.fromEntries(
@@ -51,7 +53,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${className || ""}`}>
       <h2>🚀 Console Flare</h2>
       <p className="caption">Your launchpad to data science careers</p>
       <hr />

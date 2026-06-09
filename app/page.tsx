@@ -32,6 +32,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("cv");
   const [toast, setToast] = useState<string | null>(null);
   const [resumeLoadedFromDb, setResumeLoadedFromDb] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const notify = useCallback((text: string) => {
     setToast(text);
@@ -126,7 +127,16 @@ export default function Home() {
 
   return (
     <div className="app-shell">
+      <button
+        className={`sidebar-toggle ${sidebarOpen ? "open" : ""}`}
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        title={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
+      >
+        {sidebarOpen ? "◀" : "▶"}
+      </button>
+
       <Sidebar
+        className={sidebarOpen ? "" : "collapsed"}
         user={user}
         resume={resume}
         targetRole={targetRole}
