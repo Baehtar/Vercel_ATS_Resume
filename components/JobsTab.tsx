@@ -1,123 +1,164 @@
-// components/JobsTab.tsx - Job board with filters
+// components/JobsTab.tsx - Reads pre-fetched job listings cached in Supabase
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MOCK_JOB_LISTINGS } from "@/lib/jobDb";
 
+interface Job {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  role_type?: string;
+  experience: string;
+  posted: string;
+  salary_range: string;
+  source: string;
+  apply_url: string;
+  description: string;
+  tags: string[];
+}
+
 export default function JobsTab() {
-  const jobs = MOCK_JOB_LISTINGS;
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [usingMock, setUsingMock] = useState(false);
   const [roleFilter, setRoleFilter] = useState("All");
-  const [expFilter, setExpFilter] = useState("All");
-  const [sourceFilter, setSourceFilter] = useState("All");
+  const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
 
-  const experienceOrder = [
-    "0-2 years", "1-3 years", "2-4 years", "3-5 years", "3+ years",
-    "5-8 years", "5+ years", "Not specified",
-  ];
-  const experienceOptions = experienceOrder.filter((lvl) =>
-    jobs.some((j) => j.experience === lvl)
-  );
-  const sourceOptions = Array.from(new Set(jobs.map((j) => j.source))).sort();
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/jobs");
+        const data = await res.json();
 
-  let filtered = jobs;
-  if (roleFilter !== "All") {
-    const key = roleFilter === "Data Engineer" ? "data_engineer" : "data_analyst";
-    filtered = filtered.filter((j) => j.role_type === key);
-  }
-  if (expFilter !== "All") filtered = filtered.filter((j) => j.experience === expFilter);
-  if (sourceFilter !== "All") filtered = filtered.filter((j) => j.source === sourceFilter);
+        if (data.jobs && data.jobs.length > 0) {
+          setJobs(data.jobs);
+          setUsingMock(false);
+          // Show when the most recent listing was fetched
+          const latest = data.jobs[0]?.fetched_at;
+          if (latest) {
+            setLastRefreshed(
+              new Date(latest).toLocaleDateString("en-IN", {
+                day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+              })
+            );
+          }
+        } else {
+          // Fall back to mock data if Supabase is empty or not yet seeded
+          setJobs(
+            MOCK_JOB_LISTINGS.map((j) => ({
+              ...j,
+              id: String(j.id),
+              role_type: j.role_type,
+            }))
+          );
+          setUsingMock(true);
+          if (data.error) setError(data.error);
+        }
+      } catch (e) {
+        setJobs(
+          MOCK_JOB_LISTINGS.map((j) => ({ ...j, id: String(j.id), role_type: j.role_type }))
+        );
+        setUsingMock(true);
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filtered =
+    roleFilter === "All"
+      ? jobs
+      : jobs.filter((j) => {
+          if (roleFilter === "Data Engineer")
+            return j.role_type === "data_engineer" || j.title.toLowerCase().includes("data engineer");
+          if (roleFilter === "Data Analyst")
+            return j.role_type === "data_analyst" || j.title.toLowerCase().includes("data analyst");
+          return true;
+        });
 
   return (
     <div>
-      <h2>🔍 Latest Data Science Job Openings</h2>
-      <p className="caption">Curated openings for Data Engineers and Data Analysts</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <h2 style={{ margin: 0 }}>🔍 Job Openings</h2>
+          <p className="caption">
+            {usingMock
+              ? "Showing sample listings — live listings load after first daily refresh."
+              : `Live listings refreshed daily · Last updated: ${lastRefreshed || "recently"}`}
+          </p>
+        </div>
+      </div>
 
-      <div className="grid-2" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-        <div>
-          <label className="field-label">Filter by Role</label>
-          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-            {["All", "Data Engineer", "Data Analyst"].map((o) => (
-              <option key={o}>{o}</option>
-            ))}
-          </select>
+      {error && (
+        <div className="alert alert-warning" style={{ marginTop: 8 }}>
+          ⚠ {error}
         </div>
-        <div>
-          <label className="field-label">Experience Level</label>
-          <select value={expFilter} onChange={(e) => setExpFilter(e.target.value)}>
-            {["All", ...experienceOptions].map((o) => (
-              <option key={o}>{o}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="field-label">Source</label>
-          <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
-            {["All", ...sourceOptions].map((o) => (
-              <option key={o}>{o}</option>
-            ))}
-          </select>
-        </div>
+      )}
+
+      {/* Filter */}
+      <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "12px 0" }}>
+        <label className="field-label" style={{ margin: 0 }}>Filter:</label>
+        {["All", "Data Engineer", "Data Analyst"].map((opt) => (
+          <button
+            key={opt}
+            className={roleFilter === opt ? "primary" : ""}
+            style={{ padding: "6px 14px" }}
+            onClick={() => setRoleFilter(opt)}
+          >
+            {opt}
+          </button>
+        ))}
+        <span className="caption" style={{ marginLeft: "auto" }}>
+          {loading ? "Loading…" : `${filtered.length} listings`}
+        </span>
       </div>
 
       <hr />
 
-      {filtered.length === 0 ? (
-        <div className="alert alert-info">No jobs match your filters. Try broadening your search.</div>
+      {loading ? (
+        <p className="muted"><span className="spinner" />Loading job listings…</p>
+      ) : filtered.length === 0 ? (
+        <div className="alert alert-info">No listings for this filter.</div>
       ) : (
-        <p>
-          <strong>Showing {filtered.length} openings</strong>
-        </p>
+        filtered.map((job) => (
+          <div key={job.id} className="job-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <h3 style={{ margin: "0 0 4px 0" }}>{job.title}</h3>
+                <p style={{ margin: 0, color: "var(--text-muted)" }}>
+                  🏢 {job.company}&nbsp;|&nbsp;📍 {job.location}&nbsp;|&nbsp;💰 {job.salary_range}
+                </p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <small className="muted">📅 {job.posted}</small><br />
+                <small className="muted">{job.experience}</small>
+              </div>
+            </div>
+            <div style={{ marginTop: 8 }}>
+              {(job.tags || []).map((t) => (
+                <span key={t} className="job-tag">{t}</span>
+              ))}
+            </div>
+            <details className="expander" style={{ marginTop: 12 }}>
+              <summary>📖 View — {job.title} at {job.company}</summary>
+              <div className="expander-body">
+                <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0, fontSize: "0.9rem" }}>
+                  {job.description}
+                </pre>
+                <hr />
+                <p><strong>Experience:</strong> {job.experience}</p>
+                <a href={job.apply_url} target="_blank" rel="noreferrer">
+                  <button className="primary full">🔗 Apply</button>
+                </a>
+              </div>
+            </details>
+          </div>
+        ))
       )}
-
-      {filtered.map((job) => (
-        <div key={job.id} className="job-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <h3 style={{ margin: "0 0 4px 0" }}>{job.title}</h3>
-              <p style={{ margin: 0, color: "var(--text-muted)" }}>
-                🏢 {job.company} &nbsp;|&nbsp; 📍 {job.location} &nbsp;|&nbsp; 💰 {job.salary_range}
-              </p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <small className="muted">📅 {job.posted}</small>
-              <br />
-              <small className="muted">via {job.source}</small>
-            </div>
-          </div>
-          <div style={{ marginTop: 8 }}>
-            {job.tags.map((t) => (
-              <span key={t} className="job-tag">
-                {t}
-              </span>
-            ))}
-          </div>
-
-          <details className="expander" style={{ marginTop: 12 }}>
-            <summary>
-              📖 View Full Description — {job.title} at {job.company}
-            </summary>
-            <div className="expander-body">
-              <pre
-                style={{
-                  whiteSpace: "pre-wrap",
-                  fontFamily: "inherit",
-                  margin: 0,
-                  fontSize: "0.9rem",
-                }}
-              >
-                {job.description}
-              </pre>
-              <hr />
-              <p>
-                <strong>Experience Required:</strong> {job.experience}
-              </p>
-              <a href={job.apply_url} target="_blank" rel="noreferrer">
-                <button className="primary full">🔗 Apply on {job.source}</button>
-              </a>
-            </div>
-          </details>
-        </div>
-      ))}
     </div>
   );
 }
