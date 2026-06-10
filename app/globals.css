@@ -581,3 +581,145 @@ table.score-table td {
     transform: rotate(360deg);
   }
 }
+
+/* ─── RESPONSIVE / MOBILE ────────────────────────────────────────────────── */
+
+/* Viewport meta is set in layout.tsx — these rules handle layout reflow */
+
+/* Tablet: sidebar becomes overlay-like, main padding shrinks */
+@media (max-width: 900px) {
+  .app-shell {
+    position: relative;
+  }
+
+  /* Sidebar slides over content instead of pushing it */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 200;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    max-height: 100vh;
+  }
+
+  .sidebar.collapsed {
+    width: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  /* Toggle button stays visible, doesn't jump to 332px on tablet */
+  .sidebar-toggle.open {
+    left: 328px;
+  }
+
+  .main {
+    padding: 16px;
+    width: 100%;
+  }
+}
+
+/* Mobile: full width everything */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+
+  .sidebar-toggle {
+    top: 8px;
+    left: 8px;
+  }
+
+  .sidebar-toggle.open {
+    left: 316px;
+  }
+
+  .main {
+    padding: 12px;
+    /* Leave room at top for the toggle button */
+    padding-top: 52px;
+  }
+
+  /* Stack the two-column CV layout */
+  .cv-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack all 2-column grids */
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Auth page */
+  .auth-wrap {
+    margin: 16px;
+    max-width: 100%;
+  }
+
+  /* Tabs — smaller padding so they fit on one line */
+  .tab {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* Job card header stacks vertically */
+  .job-card > div:first-child {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* Score metric + table stack */
+  .metric {
+    width: 100%;
+    display: block;
+  }
+
+  /* Bullet row delete button stays inline */
+  .bullet-row {
+    align-items: flex-start;
+  }
+
+  /* Panel padding shrinks */
+  .panel {
+    padding: 12px;
+  }
+
+  .expander-body {
+    padding: 12px;
+  }
+
+  /* Resume preview scales down to fit screen */
+  .preview-wrap {
+    padding: 8px;
+    overflow-x: auto;
+  }
+
+  /* Toast stays readable */
+  .toast {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    font-size: 0.85rem;
+  }
+
+  /* Filter button row wraps */
+  .filter-row {
+    flex-wrap: wrap;
+  }
+
+  /* ATS score breakdown table — allow text wrap */
+  table.score-table td {
+    font-size: 0.8rem;
+    padding: 5px 4px;
+  }
+
+  /* Chips wrap naturally — already flex-wrap, just ensure min size */
+  .chip {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+  }
+
+  h2 { font-size: 1.2rem; }
+  h3 { font-size: 1.05rem; }
+}
