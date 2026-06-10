@@ -127,16 +127,21 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      <button
-        className={`sidebar-toggle ${sidebarOpen ? "open" : ""}`}
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        title={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
-      >
-        {sidebarOpen ? "◀" : "▶"}
-      </button>
+      {/* Floating open button — only visible when sidebar is collapsed */}
+      {!sidebarOpen && (
+        <button
+          className="sidebar-toggle"
+          onClick={() => setSidebarOpen(true)}
+          title="Open sidebar"
+          style={{ left: 12 }}
+        >
+          ▶
+        </button>
+      )}
 
       <Sidebar
         className={sidebarOpen ? "" : "collapsed"}
+        onToggle={() => setSidebarOpen(false)}
         user={user}
         resume={resume}
         targetRole={targetRole}

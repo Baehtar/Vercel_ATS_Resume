@@ -83,11 +83,6 @@ h4 {
   cursor: pointer;
   font-size: 1.1rem;
   padding: 0;
-  transition: left 0.25s ease;
-}
-
-.sidebar-toggle.open {
-  left: 332px;
 }
 
 .main {

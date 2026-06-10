@@ -18,6 +18,7 @@ interface Props {
   onSignOut: () => void;
   notify: (text: string) => void;
   className?: string;
+  onToggle: () => void;
 }
 
 export default function Sidebar({
@@ -31,6 +32,7 @@ export default function Sidebar({
   onSignOut,
   notify,
   className,
+  onToggle,
 }: Props) {
   const roleKeywords = loadRoleKeywords();
   const roleOptions = Object.fromEntries(
@@ -54,7 +56,17 @@ export default function Sidebar({
 
   return (
     <aside className={`sidebar ${className || ""}`}>
-      <h2>🚀 Console Flare</h2>
+      {/* Collapse button sits inside the sidebar at the top */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <span style={{ fontWeight: 700, fontSize: "1.1rem" }}>🚀 Console Flare</span>
+        <button
+          onClick={onToggle}
+          title="Collapse sidebar"
+          style={{ width: 32, height: 32, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+        >
+          ◀
+        </button>
+      </div>
       <p className="caption">Your launchpad to data science careers</p>
       <hr />
 
