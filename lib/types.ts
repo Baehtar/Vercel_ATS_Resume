@@ -88,7 +88,7 @@ export interface RoleConfig {
 
 export type RoleKeywords = Record<string, RoleConfig>;
 
-export type TemplateId = "modern" | "professional" | "graduate" | "executive";
+export type TemplateId = "modern" | "professional" | "graduate" | "executive" | "twocolumn";
 
 export interface AppUser {
   id: string;

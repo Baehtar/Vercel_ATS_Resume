@@ -324,6 +324,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
 
   // 1. Experience
   let experienceHtml = "";
+  let experienceInner = "";
   if (experience.length) {
     const expItems = experience
       .map((exp) => {
@@ -350,6 +351,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                 </div>`;
       })
       .join("");
+    experienceInner = expItems;
     experienceHtml = `
             <div class="resume-section">
                 <h2 class="section-title">WORK EXPERIENCE</h2>
@@ -359,6 +361,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
 
   // 2. Education
   let educationHtml = "";
+  let educationInner = "";
   if (education.length) {
     const eduItems = education
       .map((edu) => {
@@ -381,6 +384,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                 </div>`;
       })
       .join("");
+    educationInner = eduItems;
     educationHtml = `
             <div class="resume-section">
                 <h2 class="section-title">EDUCATION</h2>
@@ -390,6 +394,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
 
   // 3. Projects
   let projectsHtml = "";
+  let projectsInner = "";
   if (projects.length) {
     const projItems = projects
       .map((proj) => {
@@ -413,6 +418,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                 </div>`;
       })
       .join("");
+    projectsInner = projItems;
     projectsHtml = `
             <div class="resume-section">
                 <h2 class="section-title">PROJECTS</h2>
@@ -422,6 +428,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
 
   // 4. Skills
   let skillsHtml = "";
+  let skillsInner = "";
   const activeSkills = skills.filter(
     (s) => (s.category || "").trim() && (s.list || "").trim()
   );
@@ -434,6 +441,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                 </div>`
       )
       .join("");
+    skillsInner = `<div class="skills-block">${skillRows}</div>`;
     skillsHtml = `
             <div class="resume-section">
                 <h2 class="section-title">SKILLS</h2>
@@ -445,6 +453,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
 
   // 5. Certifications
   let certificationsHtml = "";
+  let certificationsInner = "";
   if (certifications.length) {
     const certRows = certifications
       .map(
@@ -454,6 +463,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                 </div>`
       )
       .join("");
+    certificationsInner = `<div class="certifications-block">${certRows}</div>`;
     certificationsHtml = `
             <div class="resume-section">
                 <h2 class="section-title">CERTIFICATIONS</h2>
@@ -465,7 +475,9 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
 
   // 6. Summary
   let summaryHtml = "";
+  let summaryInner = "";
   if (summary.trim()) {
+    summaryInner = `<p class="summary-text">${_safe(summary)}</p>`;
     summaryHtml = `
             <div class="resume-section">
                 <h2 class="section-title">PROFESSIONAL SUMMARY</h2>
@@ -515,10 +527,47 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
       header_alignment: "left",
       order: ["summary", "experience", "skills", "education", "projects", "certifications"],
     },
+    twocolumn: {
+      font_family: "'Times New Roman', Georgia, serif",
+      font_title: "Calibri, 'Segoe UI', Helvetica, Arial, sans-serif",
+      accent_color: "#33697a",
+      border_color: "#000000",
+      header_alignment: "left",
+      order: ["summary", "experience", "projects", "skills", "education", "certifications"],
+    },
+  };
+
+  const sectionTitles: Record<string, string> = {
+    summary: "SUMMARY",
+    experience: "WORK EXPERIENCE",
+    projects: "PROJECTS",
+    skills: "SKILLS",
+    education: "EDUCATION",
+    certifications: "CERTIFICATIONS",
+  };
+  const sectionInnerMap: Record<string, string> = {
+    summary: summaryInner,
+    experience: experienceInner,
+    education: educationInner,
+    projects: projectsInner,
+    skills: skillsInner,
+    certifications: certificationsInner,
   };
 
   const layout = layouts[templateId] || layouts.modern;
-  const sectionsHtml = layout.order.map((key) => sectionMap[key]).join("");
+  const isTwoColumn = templateId === "twocolumn";
+  const sectionsHtml = isTwoColumn
+    ? `<table class="tc-table">${layout.order
+        .filter((key) => (sectionInnerMap[key] || "").trim())
+        .map(
+          (key) => `
+            <tr class="tc-row">
+                <td class="tc-label">${sectionTitles[key]}:</td>
+                <td class="tc-content">${sectionInnerMap[key]}</td>
+            </tr>`
+        )
+        .join("")}</table>`
+    : layout.order.map((key) => sectionMap[key]).join("");
   const headlineHtml = personal.headline
     ? `<div class="professional-headline">${_safe(personal.headline)}</div>`
     : "";
@@ -599,6 +648,39 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
             body.layout-graduate .user-name { font-size: 20pt; text-transform: none; }
             body.layout-graduate .section-title { font-size: 10pt; }
             body.layout-executive .user-name { font-size: 24pt; letter-spacing: 0; }
+
+            /* Two-column (label on left, content on right) */
+            body.layout-twocolumn { padding: 16mm 14mm; }
+            body.layout-twocolumn .user-name {
+                text-transform: none;
+                font-size: 21pt;
+                letter-spacing: 0;
+            }
+            body.layout-twocolumn .resume-header {
+                border-bottom: 1.5px solid #000000;
+                padding-bottom: 6pt;
+                margin-bottom: 0;
+            }
+            body.layout-twocolumn .professional-headline { font-weight: normal; }
+            .tc-table { width: 100%; border-collapse: collapse; }
+            .tc-row { border-bottom: 1px solid #000000; }
+            .tc-label {
+                width: 23%;
+                vertical-align: top;
+                padding: 8pt 10pt 8pt 0;
+                font-family: ${layout.font_title};
+                font-weight: bold;
+                font-size: 10.5pt;
+                letter-spacing: 0.5px;
+                color: ${layout.accent_color};
+            }
+            .tc-content {
+                vertical-align: top;
+                padding: 8pt 0;
+                font-size: 9.3pt;
+            }
+            .tc-content .resume-item:last-child { margin-bottom: 0; }
+            body.layout-twocolumn .summary-text { text-align: left; }
         </style>
     </head>
     <body class="layout-${templateId}">
@@ -620,4 +702,5 @@ export const TEMPLATE_OPTIONS: Record<TemplateId, string> = {
   professional: "Professional",
   graduate: "Graduate / Fresher",
   executive: "Executive",
+  twocolumn: "Two-Column (Classic)",
 };
