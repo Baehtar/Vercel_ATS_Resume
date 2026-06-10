@@ -77,6 +77,8 @@ export default function JobsTab() {
             return j.role_type === "data_engineer" || j.title.toLowerCase().includes("data engineer");
           if (roleFilter === "Data Analyst")
             return j.role_type === "data_analyst" || j.title.toLowerCase().includes("data analyst");
+          if (roleFilter === "Big Data Engineer")
+            return j.title.toLowerCase().includes("big data");
           return true;
         });
 
@@ -102,7 +104,7 @@ export default function JobsTab() {
       {/* Filter */}
       <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "12px 0" }}>
         <label className="field-label" style={{ margin: 0 }}>Filter:</label>
-        {["All", "Data Engineer", "Data Analyst"].map((opt) => (
+        {["All", "Data Engineer", "Data Analyst", "Big Data Engineer"].map((opt) => (
           <button
             key={opt}
             className={roleFilter === opt ? "primary" : ""}
