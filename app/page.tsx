@@ -20,6 +20,8 @@ import AdminDashboard from "@/components/AdminDashboard";
 import CVTab from "@/components/CVTab";
 import JobsTab from "@/components/JobsTab";
 import PrepTab from "@/components/PrepTab";
+import { useTheme } from "@/lib/useTheme";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type Tab = "cv" | "jobs" | "prep";
 
@@ -33,6 +35,7 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
   const [resumeLoadedFromDb, setResumeLoadedFromDb] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  useTheme(); // applies saved theme to <html> on mount
 
   const notify = useCallback((text: string) => {
     setToast(text);
@@ -149,16 +152,29 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      {/* Floating open button — only visible when sidebar is collapsed */}
+      {/* Floating buttons — only visible when sidebar is collapsed */}
       {!sidebarOpen && (
-        <button
-          className="sidebar-toggle"
-          onClick={() => setSidebarOpen(true)}
-          title="Open sidebar"
-          style={{ left: 12 }}
-        >
-          ▶
-        </button>
+        <div style={{ position: "fixed", top: 12, left: 12, zIndex: 100, display: "flex", gap: 8, alignItems: "center" }}>
+          <button
+            className="sidebar-toggle"
+            onClick={() => setSidebarOpen(true)}
+            title="Open sidebar"
+          >
+            ▶
+          </button>
+          <div style={{
+            background: "var(--panel)",
+            border: "1px solid var(--border)",
+            borderRadius: 10,
+            padding: "0 10px",
+            height: 36,
+            display: "flex",
+            alignItems: "center",
+            boxShadow: "0 0 16px var(--primary-glow)",
+          }}>
+            <ThemeToggle />
+          </div>
+        </div>
       )}
 
       <Sidebar

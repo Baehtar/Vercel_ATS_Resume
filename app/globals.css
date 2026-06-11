@@ -23,15 +23,18 @@
   --gray-900: #101828;
   --black:    #000;
   --white:    #fff;
+}
 
-  /* ── Semantic aliases (used throughout) ─────────────────────────────────── */
+/* ── Dark mode (default) ────────────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
   --bg:           var(--gray-900);
   --bg-soft:      var(--gray-800);
   --panel:        var(--gray-800);
   --panel-2:      var(--gray-700);
   --panel-3:      var(--gray-600);
-  --border:       rgba(209, 213, 220, 0.12);   /* gray-300 @ 12% */
-  --border-hover: rgba(209, 213, 220, 0.28);   /* gray-300 @ 28% */
+  --border:       rgba(209, 213, 220, 0.12);
+  --border-hover: rgba(209, 213, 220, 0.28);
   --text:         var(--gray-100);
   --text-muted:   var(--gray-500);
   --primary:      var(--blue-600);
@@ -43,6 +46,30 @@
   --green:        var(--green-500);
   --red:          #ef4444;
   --amber:        var(--yellow-400);
+  --purple:       var(--purple-600);
+  --indigo:       var(--blue-600);
+}
+
+/* ── Light mode ─────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:           var(--gray-100);
+  --bg-soft:      var(--gray-200);
+  --panel:        var(--white);
+  --panel-2:      var(--gray-100);
+  --panel-3:      var(--gray-200);
+  --border:       rgba(54, 65, 83, 0.14);
+  --border-hover: rgba(54, 65, 83, 0.30);
+  --text:         var(--gray-900);
+  --text-muted:   var(--gray-600);
+  --primary:      var(--blue-600);
+  --primary-hover:#1a6aff;
+  --primary-glow: rgba(21, 93, 252, 0.15);
+  --orange:       #c9a200;
+  --orange-hover: #a88500;
+  --orange-glow:  rgba(201, 162, 0, 0.15);
+  --green:        var(--green-600);
+  --red:          #dc2626;
+  --amber:        #b45309;
   --purple:       var(--purple-600);
   --indigo:       var(--blue-600);
 }
@@ -93,7 +120,6 @@ h1, h2, h3, h4 {
   position: sticky;
   top: 0;
   transition: width 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
-  background: linear-gradient(180deg, var(--gray-800) 0%, var(--gray-900) 100%);
 }
 
 .sidebar.collapsed {
@@ -196,7 +222,7 @@ select:-webkit-autofill {
   color: var(--text) !important;
 }
 
-/* Force all input-like elements to use dark bg — overrides user-agent sheet */
+/* Force all input-like elements to use panel bg — overrides user-agent sheet */
 input,
 input[type="text"],
 input[type="email"],
