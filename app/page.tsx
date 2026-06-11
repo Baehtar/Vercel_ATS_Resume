@@ -58,23 +58,45 @@ export default function Home() {
   }, []);
 
   // Restore an existing Supabase session on first load.
+  // Must NOT auto-login during a password recovery flow — Supabase sets a
+  // valid session on the recovery link click, but we need to show the reset
+  // form instead. The recovery token arrives in the URL hash, not query params.
   useEffect(() => {
     const client = getSupabaseClient();
     if (!client) {
       setBootstrapping(false);
       return;
     }
+
+    // Listen for auth events BEFORE checking the session so PASSWORD_RECOVERY
+    // is caught even if getSession() resolves first.
+    const { data: sub } = client.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        // Block auto-login and let Auth component handle the reset form.
+        setUser(null);
+        setBootstrapping(false);
+      }
+    });
+
     (async () => {
       const { data } = await client.auth.getSession();
       const sessionUser = data.session?.user;
-      // Don't auto-restore if a recovery flow is in progress.
+
+      // Check both query params AND hash fragment for recovery signals.
       const params = new URLSearchParams(window.location.search);
-      const recovering = params.get("reset") === "1" || params.get("type") === "recovery";
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const recovering =
+        params.get("reset") === "1" ||
+        params.get("type") === "recovery" ||
+        hash.get("type") === "recovery";
+
       if (sessionUser && !recovering) {
         setUser(sessionUser as unknown as AppUser);
       }
       setBootstrapping(false);
     })();
+
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   // Resolve role + load saved resume once a user is present.

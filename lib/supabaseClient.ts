@@ -144,7 +144,8 @@ export async function resetPasswordStudent(email: string): Promise<{ ok: boolean
 /**
  * Update password after a Supabase recovery link.
  * supabase-js (detectSessionInUrl) automatically establishes the recovery
- * session from the URL, so we only need to call updateUser.
+ * session from the URL, so we only need to call updateUser, then immediately
+ * sign out so the user is forced to log in fresh with the new password.
  */
 export async function updatePasswordAfterRecovery(
   newPassword: string
@@ -160,6 +161,8 @@ export async function updatePasswordAfterRecovery(
   try {
     const { error } = await client.auth.updateUser({ password: newPassword });
     if (error) throw error;
+    // Sign out the recovery session so the user must log in with the new password.
+    await client.auth.signOut();
     return { ok: true, error: null };
   } catch (e) {
     let msg = e instanceof Error ? e.message : String(e);
