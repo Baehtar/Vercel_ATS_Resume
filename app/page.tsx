@@ -152,29 +152,28 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      {/* Floating buttons — only visible when sidebar is collapsed */}
+      {/* Theme toggle — fixed top-right, always visible */}
+      <div style={{
+        position: "fixed",
+        top: 14,
+        right: 20,
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+      }}>
+        <ThemeToggle />
+      </div>
+
+      {/* Floating open button — only visible when sidebar is collapsed */}
       {!sidebarOpen && (
-        <div style={{ position: "fixed", top: 12, left: 12, zIndex: 100, display: "flex", gap: 8, alignItems: "center" }}>
-          <button
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen(true)}
-            title="Open sidebar"
-          >
-            ▶
-          </button>
-          <div style={{
-            background: "var(--panel)",
-            border: "1px solid var(--border)",
-            borderRadius: 10,
-            padding: "0 10px",
-            height: 36,
-            display: "flex",
-            alignItems: "center",
-            boxShadow: "0 0 16px var(--primary-glow)",
-          }}>
-            <ThemeToggle />
-          </div>
-        </div>
+        <button
+          className="sidebar-toggle"
+          onClick={() => setSidebarOpen(true)}
+          title="Open sidebar"
+          style={{ position: "fixed", top: 12, left: 12, zIndex: 100 }}
+        >
+          ▶
+        </button>
       )}
 
       <Sidebar
@@ -201,7 +200,7 @@ export default function Home() {
       />
 
       <main className="main">
-        <div style={{ textAlign: "right", color: "var(--blue-600)", fontSize: "1.1rem" }}>
+        <div style={{ color: "var(--blue-600)", fontSize: "1.1rem", marginBottom: 4 }}>
           👋 Hello {userName}
         </div>
 

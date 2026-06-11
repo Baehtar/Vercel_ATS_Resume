@@ -202,8 +202,20 @@ select {
   outline: none;
   -webkit-appearance: none;
   appearance: none;
-  color-scheme: dark;
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* color-scheme must match the active theme so the browser doesn't paint its own border */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  color-scheme: dark;
+}
+
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  color-scheme: light;
 }
 
 /* Override browser autofill white background */

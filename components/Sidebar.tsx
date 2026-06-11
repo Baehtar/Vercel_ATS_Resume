@@ -6,7 +6,6 @@ import { loadRoleKeywords } from "@/lib/roleKeywords";
 import type { AppUser } from "@/lib/types";
 import { saveResume } from "@/lib/supabaseClient";
 import type { Resume } from "@/lib/types";
-import ThemeToggle from "@/components/ThemeToggle";
 
 interface Props {
   user: AppUser;
@@ -64,16 +63,13 @@ export default function Sidebar({
           alt="ConsoleFlare"
           style={{ height: 36, width: "auto" }}
         />
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <ThemeToggle />
-          <button
-            onClick={onToggle}
-            title="Collapse sidebar"
-            style={{ width: 32, height: 32, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-          >
-            ◀
-          </button>
-        </div>
+        <button
+          onClick={onToggle}
+          title="Collapse sidebar"
+          style={{ width: 32, height: 32, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+        >
+          ◀
+        </button>
       </div>
       <p className="caption">Your launchpad to data science careers</p>
       <hr />
