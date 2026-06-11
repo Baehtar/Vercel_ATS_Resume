@@ -163,7 +163,7 @@ export default function Home() {
       />
 
       <main className="main">
-        <div style={{ textAlign: "right", color: "#3b82f6", fontSize: "1.1rem" }}>
+        <div style={{ textAlign: "right", color: "var(--blue-600)", fontSize: "1.1rem" }}>
           👋 Hello {userName}
         </div>
 

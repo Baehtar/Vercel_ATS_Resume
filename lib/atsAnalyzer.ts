@@ -1,7 +1,7 @@
 // lib/atsAnalyzer.ts - Role-based keyword scoring and resume compliance engine
 // Ported from ats_analyzer.py
 import { loadRoleKeywords } from "./roleKeywords";
-import type { AtsReport, Resume } from "./types";
+import type { AtsReport, ExperienceGap, Resume } from "./types";
 
 export { loadRoleKeywords };
 
@@ -45,6 +45,74 @@ function escapeRegExp(value: string): string {
 }
 
 /**
+ * Parse a date string (YYYY-MM-DD, "Present", or partial) into a Date.
+ * Returns null if unparseable.
+ */
+function parseDate(raw: string): Date | null {
+  if (!raw) return null;
+  const s = raw.trim().toLowerCase();
+  if (s === "present" || s === "current") return new Date();
+  // YYYY-MM-DD or YYYY-MM
+  const iso = raw.trim().match(/^(\d{4}-\d{2}(?:-\d{2})?)$/);
+  if (iso) {
+    const d = new Date(iso[1]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  // Fallback: let the JS engine try
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/** Difference in whole months between two dates (end - start). */
+function monthsBetween(start: Date, end: Date): number {
+  return (
+    (end.getFullYear() - start.getFullYear()) * 12 +
+    (end.getMonth() - start.getMonth())
+  );
+}
+
+/**
+ * Detect gaps between consecutive experience entries.
+ * Entries are sorted by start date. A gap is only flagged when it is
+ * > 1 month (allows for normal job-transition buffer).
+ */
+function detectExperienceGaps(resume: Resume): ExperienceGap[] {
+  const gaps: ExperienceGap[] = [];
+
+  // Build list of { start, end } for entries where both dates are parseable
+  const periods: { start: Date; end: Date; endRaw: string; startRaw: string }[] = [];
+
+  for (const exp of resume.experience || []) {
+    const start = parseDate(exp.startDate);
+    const end = parseDate(exp.endDate);
+    if (start && end) {
+      periods.push({ start, end, endRaw: exp.endDate, startRaw: exp.startDate });
+    }
+  }
+
+  if (periods.length < 2) return gaps;
+
+  // Sort chronologically by start date
+  periods.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  for (let i = 0; i < periods.length - 1; i++) {
+    const prevEnd = periods[i].end;
+    const nextStart = periods[i + 1].start;
+    const gapMonths = monthsBetween(prevEnd, nextStart);
+
+    if (gapMonths > 1) {
+      gaps.push({
+        from: periods[i].endRaw,
+        to: periods[i + 1].startRaw,
+        months: gapMonths,
+      });
+    }
+  }
+
+  return gaps;
+}
+
+/**
  * Analyze resume against the selected role's keyword requirements.
  * Returns a detailed report with score breakdown, matched/missing keywords, and warnings.
  */
@@ -71,6 +139,7 @@ export function analyzeResume(resume: Resume, selectedRole: string): AtsReport {
     formatting_warnings: [],
     verb_suggestions: [],
     word_count: 0,
+    experience_gaps: [],
   };
 
   const resumeText = getResumeFullText(resume);
@@ -199,6 +268,30 @@ export function analyzeResume(resume: Resume, selectedRole: string): AtsReport {
         message: `Only ${Math.round(verbRatio * 100)}% of experience bullets use strong action verbs. Start bullets with verbs like: ${actionVerbs
           .slice(0, 5)
           .join(", ")}.`,
+      });
+    }
+  }
+
+  // Experience gap detection
+  const gaps = detectExperienceGaps(resume);
+  analysis.experience_gaps = gaps;
+
+  if (gaps.length > 0) {
+    // Find the longest gap to calibrate the penalty
+    const maxGap = Math.max(...gaps.map((g) => g.months));
+    if (maxGap > 6) {
+      // Large gap (> 6 months): −5
+      fmtPoints -= 5;
+      analysis.formatting_warnings.push({
+        type: "error",
+        message: `Large employment gap detected (${maxGap} months). ATS systems flag unexplained gaps — consider adding freelance work, courses, or a brief explanation in your summary.`,
+      });
+    } else {
+      // Small gap (2–6 months): −3
+      fmtPoints -= 3;
+      analysis.formatting_warnings.push({
+        type: "warning",
+        message: `Short employment gap detected (${maxGap} month${maxGap > 1 ? "s" : ""}). Consider addressing this in your professional summary.`,
       });
     }
   }

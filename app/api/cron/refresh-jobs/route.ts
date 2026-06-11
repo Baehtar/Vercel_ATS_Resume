@@ -16,6 +16,7 @@ const QUERIES = [
 
 const LOCATION = "India";
 const DATE_POSTED = "month"; // last 30 days each refresh
+const MAX_EXPERIENCE_MONTHS = 60; // 0–5 years only
 
 const TECH_KEYWORDS = [
   "Python","SQL","Spark","Kafka","AWS","Azure","GCP","Airflow","Docker",
@@ -127,7 +128,12 @@ export async function GET(request: Request) {
   for (const { query, roleType } of QUERIES) {
     try {
       const raw = await fetchQuery(apiKey, query);
-      const jobs = raw.map((r) => normalizeJob(r, roleType));
+      // Keep only jobs requiring 0–5 years experience (or unspecified)
+      const filtered = raw.filter((r) => {
+        const months = r.job_required_experience?.required_experience_in_months;
+        return months === undefined || months === null || months <= MAX_EXPERIENCE_MONTHS;
+      });
+      const jobs = filtered.map((r) => normalizeJob(r, roleType));
 
       if (jobs.length) {
         const { error } = await supabase

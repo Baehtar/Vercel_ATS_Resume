@@ -187,10 +187,15 @@ export default function Auth({ onLogin }: Props) {
 
   return (
     <div className="auth-wrap">
-      <h2 className="center" style={{ color: "#3b82f6", marginTop: 30 }}>
-        🚀 Console Flare Portal
-      </h2>
-      <p className="center muted">Sign in to access your ATS Resume Builder & Career Tools</p>
+      {/* ConsoleFlare logo */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 30, marginBottom: 8 }}>
+        <img
+          src="/consoleflare-logo.svg"
+          alt="ConsoleFlare"
+          style={{ height: 56, width: "auto" }}
+        />
+      </div>
+      <p className="center muted">Sign in to access your ATS Resume Builder &amp; Career Tools</p>
 
       {msg && <div className={`alert alert-${msg.kind}`}>{msg.text}</div>}
 

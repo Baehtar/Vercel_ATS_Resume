@@ -19,6 +19,69 @@ interface Job {
   tags: string[];
 }
 
+function JobCard({ job }: { job: Job }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="job-card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h3 style={{ margin: "0 0 4px 0" }}>{job.title}</h3>
+          <p style={{ margin: 0, color: "var(--text-muted)" }}>
+            🏢 {job.company}&nbsp;|&nbsp;📍 {job.location}&nbsp;|&nbsp;💰 {job.salary_range}
+          </p>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <small className="muted">📅 {job.posted}</small><br />
+          <small className="muted">{job.experience}</small>
+        </div>
+      </div>
+      <div style={{ marginTop: 8 }}>
+        {(job.tags || []).map((t) => (
+          <span key={t} className="job-tag">{t}</span>
+        ))}
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+        >
+          {open ? "🙈 Hide Description" : `📖 View — ${job.title} at ${job.company}`}
+        </button>
+
+        {open && (
+          <div className="expander-body" style={{ marginTop: 10, background: "var(--panel-2)", borderRadius: 10, padding: 16 }}>
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0, fontSize: "0.9rem" }}>
+              {job.description}
+            </pre>
+            <hr />
+            <p><strong>Experience:</strong> {job.experience}</p>
+            <a href={job.apply_url} target="_blank" rel="noreferrer">
+              <button className="primary full">🔗 Apply</button>
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface Job {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  role_type?: string;
+  experience: string;
+  posted: string;
+  salary_range: string;
+  source: string;
+  apply_url: string;
+  description: string;
+  tags: string[];
+}
+
 export default function JobsTab() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,38 +190,7 @@ export default function JobsTab() {
         <div className="alert alert-info">No listings for this filter.</div>
       ) : (
         filtered.map((job) => (
-          <div key={job.id} className="job-card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <h3 style={{ margin: "0 0 4px 0" }}>{job.title}</h3>
-                <p style={{ margin: 0, color: "var(--text-muted)" }}>
-                  🏢 {job.company}&nbsp;|&nbsp;📍 {job.location}&nbsp;|&nbsp;💰 {job.salary_range}
-                </p>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <small className="muted">📅 {job.posted}</small><br />
-                <small className="muted">{job.experience}</small>
-              </div>
-            </div>
-            <div style={{ marginTop: 8 }}>
-              {(job.tags || []).map((t) => (
-                <span key={t} className="job-tag">{t}</span>
-              ))}
-            </div>
-            <details className="expander" style={{ marginTop: 12 }}>
-              <summary>📖 View — {job.title} at {job.company}</summary>
-              <div className="expander-body">
-                <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0, fontSize: "0.9rem" }}>
-                  {job.description}
-                </pre>
-                <hr />
-                <p><strong>Experience:</strong> {job.experience}</p>
-                <a href={job.apply_url} target="_blank" rel="noreferrer">
-                  <button className="primary full">🔗 Apply</button>
-                </a>
-              </div>
-            </details>
-          </div>
+          <JobCard key={job.id} job={job} />
         ))
       )}
     </div>

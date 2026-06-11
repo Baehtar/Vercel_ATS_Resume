@@ -82,7 +82,7 @@ export default function AtsAudit({ report }: { report: AtsReport }) {
           </div>
         </>
       ) : report.must_have_matched.length ? (
-        <small style={{ color: "#10b981" }}>✅ All must-have keywords present!</small>
+        <small style={{ color: "var(--green-500)" }}>✅ All must-have keywords present!</small>
       ) : null}
 
       <h4 style={{ marginTop: 16 }}>🔵 Good-to-Have Keywords</h4>
@@ -120,20 +120,66 @@ export default function AtsAudit({ report }: { report: AtsReport }) {
           ))}
         </div>
       ) : (
-        <small style={{ color: "#10b981" }}>Great verb usage!</small>
+        <small style={{ color: "var(--green-500)" }}>Great verb usage!</small>
       )}
 
       <hr />
 
       <h4>📋 Formatting & Structure Audit</h4>
       {report.formatting_warnings.length === 0 ? (
-        <small style={{ color: "#10b981" }}>✅ No formatting issues found!</small>
+        <small style={{ color: "var(--green-500)" }}>✅ No formatting issues found!</small>
       ) : (
         report.formatting_warnings.map((w, i) => (
           <div key={i} className={`warn-box ${w.type === "error" ? "warn-error" : "warn-warning"}`}>
             <strong>{w.type === "error" ? "✖" : "⚠"}</strong> {w.message}
           </div>
         ))
+      )}
+
+      {report.experience_gaps && report.experience_gaps.length > 0 && (
+        <>
+          <h4 style={{ marginTop: 16 }}>🗓 Employment Gap Timeline</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {report.experience_gaps.map((gap, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  background: "var(--panel-2)",
+                  border: `1px solid ${gap.months > 6 ? "rgba(239,68,68,0.35)" : "rgba(250,200,0,0.35)"}`,
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                }}
+              >
+                <span style={{ fontSize: "1.3rem" }}>{gap.months > 6 ? "🔴" : "🟡"}</span>
+                <div style={{ flex: 1 }}>
+                  <strong style={{ fontSize: "0.9rem" }}>
+                    {gap.from} → {gap.to}
+                  </strong>
+                  <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginTop: 2 }}>
+                    {gap.months} month{gap.months !== 1 ? "s" : ""} gap
+                    {gap.months > 6 ? " — significant, address in summary" : " — minor, consider mentioning"}
+                  </div>
+                </div>
+                <span
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: 20,
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    background: gap.months > 6 ? "rgba(239,68,68,0.12)" : "rgba(250,200,0,0.12)",
+                    color: gap.months > 6 ? "#f87171" : "var(--yellow-400)",
+                    border: `1px solid ${gap.months > 6 ? "rgba(239,68,68,0.25)" : "rgba(250,200,0,0.25)"}`,
+                  }}
+                >
+                  {gap.months > 6 ? "−5 pts" : "−3 pts"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

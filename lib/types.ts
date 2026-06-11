@@ -61,6 +61,12 @@ export interface FormattingWarning {
   message: string;
 }
 
+export interface ExperienceGap {
+  from: string;   // end date of previous role
+  to: string;     // start date of next role
+  months: number; // gap length in months
+}
+
 export interface AtsReport {
   score: number;
   breakdown: {
@@ -76,6 +82,7 @@ export interface AtsReport {
   formatting_warnings: FormattingWarning[];
   verb_suggestions: string[];
   word_count: number;
+  experience_gaps: ExperienceGap[];
 }
 
 export interface RoleConfig {

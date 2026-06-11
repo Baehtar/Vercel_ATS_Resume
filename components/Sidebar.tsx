@@ -58,7 +58,11 @@ export default function Sidebar({
     <aside className={`sidebar ${className || ""}`}>
       {/* Collapse button sits inside the sidebar at the top */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <span style={{ fontWeight: 700, fontSize: "1.1rem" }}>🚀 Console Flare</span>
+        <img
+          src="/consoleflare-logo.svg"
+          alt="ConsoleFlare"
+          style={{ height: 36, width: "auto" }}
+        />
         <button
           onClick={onToggle}
           title="Collapse sidebar"

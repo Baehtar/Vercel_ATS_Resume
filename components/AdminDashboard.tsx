@@ -41,7 +41,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
 
   return (
     <div className="main">
-      <h2 style={{ color: "#3b82f6" }}>🛡️ Admin Dashboard</h2>
+      <h2 style={{ color: "var(--blue-600)" }}>🛡️ Admin Dashboard</h2>
 
       {error && <div className="alert alert-error">Could not fetch students: {error}</div>}
 
