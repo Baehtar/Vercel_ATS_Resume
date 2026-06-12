@@ -1,5 +1,5 @@
-:root {
-  /* ── Design token palette ───────────────────────────────────────────────── */
+﻿:root {
+  /* â”€â”€ Design token palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
     "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
@@ -25,7 +25,7 @@
   --white:    #fff;
 }
 
-/* ── Dark mode (default) ────────────────────────────────────────────────── */
+/* â”€â”€ Dark mode (default) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root,
 [data-theme="dark"] {
   --bg:           var(--gray-900);
@@ -48,9 +48,11 @@
   --amber:        var(--yellow-400);
   --purple:       var(--purple-600);
   --indigo:       var(--blue-600);
+  --btn-shadow:   var(--white);   /* white offset shadow in dark mode */
+  --btn-border:   var(--white);
 }
 
-/* ── Light mode ─────────────────────────────────────────────────────────── */
+/* â”€â”€ Light mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 [data-theme="light"] {
   --bg:           var(--gray-100);
   --bg-soft:      var(--gray-200);
@@ -72,17 +74,45 @@
   --amber:        #b45309;
   --purple:       var(--purple-600);
   --indigo:       var(--blue-600);
+  --btn-shadow:   var(--gray-900);  /* dark offset shadow in light mode */
+  --btn-border:   var(--gray-900);
 }
 
 * {
   box-sizing: border-box;
 }
 
-html,
+html {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.045) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  /* Smooth background colour transition during spill */
+  transition: background-color 0s;
+}
+
+[data-theme="light"] {
+  background-image: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.055) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+}
+
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
+  background: transparent;
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 15px;
@@ -148,6 +178,48 @@ h1, h2, h3, h4 {
   padding: 0;
   color: var(--white);
   box-shadow: 0 0 16px var(--primary-glow);
+  /* override global yellow button */
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ─── View Transition — theme spill effect ──────────────────────────────── */
+
+/* Tell the browser html is the named transition root */
+html {
+  view-transition-name: root;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* ─── Theme toggle — no hover effects ───────────────────────────────────── */
+button.theme-toggle-btn,
+button.theme-toggle-btn:hover,
+button.theme-toggle-btn:active,
+button.theme-toggle-btn:focus {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .main {
@@ -174,7 +246,7 @@ hr {
   margin: 16px 0;
 }
 
-/* ─── Inputs ─────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 label.field-label {
   display: block;
   font-size: 0.82rem;
@@ -235,7 +307,7 @@ select:-webkit-autofill {
   color: var(--text) !important;
 }
 
-/* Force all input-like elements to use panel bg — overrides user-agent sheet */
+/* Force all input-like elements to use panel bg â€” overrides user-agent sheet */
 input,
 input[type="text"],
 input[type="email"],
@@ -295,72 +367,116 @@ textarea::placeholder {
   opacity: 0.7;
 }
 
-/* ─── Buttons ────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 button {
+  position: relative;
+  overflow: hidden;
   font-family: inherit;
   cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--panel-3);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 9px 16px;
+  background: var(--yellow-400);
+  color: var(--gray-900);
+  border: 1px solid #000;
+  border-radius: 0;                       /* sharp */
+  padding: 9px 18px;
   font-size: 0.88rem;
-  font-weight: 500;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--btn-shadow); /* hard offset shadow */
+  transition: box-shadow 0.12s ease, transform 0.12s ease, background 0.12s ease;
 }
 
-button:hover {
-  background: var(--panel-2);
-  border-color: var(--border-hover);
+/* Hover â€” slide up + shadow grows */
+button:hover:not(:disabled) {
+  transform: translate(-3px, -4px);
+  box-shadow: 6px 7px 0 var(--btn-shadow);
+  background: #ffe033;
 }
 
-button:active {
-  transform: scale(0.98);
+/* Active â€” snap back down */
+button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--btn-shadow);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
   transform: none;
+  box-shadow: 3px 3px 0 var(--btn-shadow);
 }
 
+/* â”€â”€â”€ Variants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+/* primary â€” same yellow, slightly bigger shadow to signal importance */
 button.primary {
-  background: linear-gradient(135deg, var(--blue-600) 0%, var(--purple-600) 100%);
-  border-color: transparent;
-  color: var(--white);
-  box-shadow: 0 0 16px var(--primary-glow);
-  font-weight: 600;
-}
-
-button.primary:hover {
-  background: linear-gradient(135deg, var(--primary-hover) 0%, #7a0ed4 100%);
-  box-shadow: 0 0 24px var(--primary-glow);
-}
-
-button.orange {
-  background: linear-gradient(135deg, var(--yellow-400) 0%, #ffd740 100%);
-  border-color: transparent;
+  background: var(--yellow-400);
   color: var(--gray-900);
-  box-shadow: 0 0 16px var(--orange-glow);
-  font-weight: 600;
+  border-color: #000;
+  box-shadow: 4px 4px 0 var(--btn-shadow);
+  font-size: 0.9rem;
 }
 
-button.orange:hover {
-  background: linear-gradient(135deg, var(--orange-hover) 0%, var(--yellow-400) 100%);
-  box-shadow: 0 0 24px var(--orange-glow);
+button.primary:hover:not(:disabled) {
+  transform: translate(-4px, -5px);
+  box-shadow: 8px 9px 0 var(--btn-shadow);
+  background: #ffe033;
+}
+
+button.primary:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--btn-shadow);
+}
+
+/* orange â€” keep the class working but make it yellow too */
+button.orange {
+  background: var(--yellow-400);
+  color: var(--gray-900);
+  border-color: #000;
+}
+
+/* ghost â€” transparent with border */
+button.ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border-hover);
+  box-shadow: 2px 2px 0 var(--border-hover);
+}
+
+button.ghost:hover:not(:disabled) {
+  background: var(--panel-2);
+  transform: translate(-2px, -3px);
+  box-shadow: 4px 5px 0 var(--border-hover);
+}
+
+/* cta â€” same as base but full-width friendly, used for big actions */
+button.btn-cta {
+  background: var(--yellow-400);
+  color: var(--gray-900);
+  border-color: #000;
+  box-shadow: 4px 4px 0 var(--btn-shadow);
+  font-size: 0.94rem;
+}
+
+button.btn-cta:hover:not(:disabled) {
+  transform: translate(-5px, -6px);
+  box-shadow: 9px 10px 0 var(--btn-shadow);
+  background: #ffe033;
+}
+
+button.btn-cta:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--btn-shadow);
+}
+
+button.btn-cta:disabled {
+  opacity: 0.45;
+  transform: none;
+  box-shadow: 4px 4px 0 var(--btn-shadow);
 }
 
 button.full {
   width: 100%;
-}
-
-button.ghost {
-  background: transparent;
-  border-color: var(--border);
-}
-
-button.ghost:hover {
-  background: var(--panel-2);
 }
 
 .btn-row {
@@ -372,7 +488,7 @@ button.ghost:hover {
   flex: 1;
 }
 
-/* ─── Cards / panels ─────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Cards / panels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -401,7 +517,7 @@ button.ghost:hover {
   }
 }
 
-/* ─── Expander ───────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Expander â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 details.expander {
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -437,7 +553,7 @@ details.expander[open] > summary {
   padding: 16px;
 }
 
-/* ─── Tabs ───────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .tabs {
   display: flex;
   gap: 4px;
@@ -456,12 +572,18 @@ details.expander[open] > summary {
   font-weight: 500;
   font-size: 0.9rem;
   transition: color 0.15s, border-color 0.15s;
+  /* override the global yellow button style */
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .tab:hover {
   background: transparent;
   color: var(--text);
   border-bottom-color: var(--border-hover);
+  transform: none;
+  box-shadow: none !important;
 }
 
 .tab.active {
@@ -571,7 +693,7 @@ details.expander[open] > summary {
   color: #6a9dff;
 }
 
-/* ─── Toast ──────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .toast {
   position: fixed;
   bottom: 20px;
@@ -586,7 +708,7 @@ details.expander[open] > summary {
   font-weight: 500;
 }
 
-/* ─── Job board ──────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Job board â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .job-card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -625,7 +747,7 @@ details.expander[open] > summary {
   font-weight: 600;
 }
 
-/* ─── Metric ─────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Metric â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .metric {
   background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-700) 100%);
   border: 1px solid var(--border);
@@ -696,9 +818,25 @@ table.score-table td {
   flex: 1;
 }
 .icon-btn {
-  width: 40px;
+  width: 36px;
   flex: 0 0 auto;
-  padding: 9px 0;
+  padding: 6px 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  text-transform: none;
+  font-size: 0.8rem;
+  letter-spacing: normal;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+  transform: none;
+  box-shadow: none;
 }
 
 .chip-select {
@@ -746,9 +884,9 @@ table.score-table td {
   }
 }
 
-/* ─── RESPONSIVE / MOBILE ────────────────────────────────────────────────── */
+/* â”€â”€â”€ RESPONSIVE / MOBILE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-/* Viewport meta is set in layout.tsx — these rules handle layout reflow */
+/* Viewport meta is set in layout.tsx â€” these rules handle layout reflow */
 
 /* Tablet: sidebar becomes overlay-like, main padding shrinks */
 @media (max-width: 900px) {
@@ -821,7 +959,7 @@ table.score-table td {
     max-width: 100%;
   }
 
-  /* Tabs — smaller padding so they fit on one line */
+  /* Tabs â€” smaller padding so they fit on one line */
   .tab {
     padding: 8px 12px;
     font-size: 0.85rem;
@@ -872,13 +1010,13 @@ table.score-table td {
     flex-wrap: wrap;
   }
 
-  /* ATS score breakdown table — allow text wrap */
+  /* ATS score breakdown table â€” allow text wrap */
   table.score-table td {
     font-size: 0.8rem;
     padding: 5px 4px;
   }
 
-  /* Chips wrap naturally — already flex-wrap, just ensure min size */
+  /* Chips wrap naturally â€” already flex-wrap, just ensure min size */
   .chip {
     font-size: 0.75rem;
     padding: 3px 8px;
@@ -887,3 +1025,4 @@ table.score-table td {
   h2 { font-size: 1.2rem; }
   h3 { font-size: 1.05rem; }
 }
+

@@ -1,35 +1,41 @@
-// components/ThemeToggle.tsx - Sliding light/dark mode toggle
+// components/ThemeToggle.tsx - Sliding light/dark mode toggle with spill transition
 "use client";
 
+import { useRef } from "react";
 import { useTheme } from "@/lib/useTheme";
 
 export default function ThemeToggle() {
-  const [theme, toggleTheme] = useTheme();
+  const [theme, toggle] = useTheme();
   const isDark = theme === "dark";
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const handleClick = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      // Origin = center of the toggle button
+      const x = Math.round(rect.left + rect.width / 2);
+      const y = Math.round(rect.top + rect.height / 2);
+      toggle(x, y);
+    } else {
+      // Fallback: top-right corner
+      toggle(window.innerWidth - 30, 20);
+    }
+  };
 
   return (
     <button
-      onClick={toggleTheme}
+      ref={btnRef}
+      onClick={handleClick}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      style={{
-        /* reset button defaults */
-        border: "none",
-        padding: 0,
-        background: "transparent",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        flexShrink: 0,
-      }}
+      className="theme-toggle-btn"
     >
       {/* Sun icon */}
       <svg
         width="14" height="14" viewBox="0 0 24 24" fill="none"
         stroke={isDark ? "var(--text-muted)" : "var(--amber)"}
         strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
-        style={{ transition: "stroke 0.2s" }}
+        style={{ transition: "stroke 0.25s" }}
       >
         <circle cx="12" cy="12" r="4"/>
         <line x1="12" y1="2"  x2="12" y2="5"/>
@@ -72,7 +78,7 @@ export default function ThemeToggle() {
         width="13" height="13" viewBox="0 0 24 24" fill="none"
         stroke={isDark ? "var(--blue-600)" : "var(--text-muted)"}
         strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
-        style={{ transition: "stroke 0.2s" }}
+        style={{ transition: "stroke 0.25s" }}
       >
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
       </svg>

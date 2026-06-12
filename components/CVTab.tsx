@@ -287,7 +287,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                 placeholder="Highlight your data science expertise, tools you use, and quantified achievements..."
                 onChange={(e) => patch((d) => (d.summary = e.target.value))}
               />
-              <button onClick={generateSummary} disabled={summaryBusy} style={{ marginTop: 8 }}>
+              <button className="btn-cta full" onClick={generateSummary} disabled={summaryBusy} style={{ marginTop: 8 }}>
                 {summaryBusy && <span className="spinner" />}Generate Professional Summary
               </button>
             </div>
@@ -338,7 +338,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                   />
                 </div>
               </div>
-              <button onClick={generateExperienceEntry} disabled={expBusy} style={{ marginTop: 8 }}>
+              <button className="btn-cta full" onClick={generateExperienceEntry} disabled={expBusy} style={{ marginTop: 8 }}>
                 {expBusy && <span className="spinner" />}Generate Experience
               </button>
 
@@ -741,8 +741,8 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
           </details>
 
           <hr />
-          <button className="primary full" onClick={() => printResume(previewHtml)}>
-            Download Resume PDF
+          <button className="btn-cta full" onClick={() => printResume(previewHtml)}>
+            ⬇ Download Resume PDF
           </button>
         </div>
 
