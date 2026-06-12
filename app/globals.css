@@ -195,10 +195,11 @@ select {
   background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
+  border-radius: 8px;
+  padding: 11px 16px;
   font-size: 0.92rem;
   font-family: inherit;
+  line-height: 1.5;
   outline: none;
   -webkit-appearance: none;
   appearance: none;
@@ -248,13 +249,34 @@ textarea,
 select {
   background-color: var(--panel-2) !important;
   color: var(--text) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  outline: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  padding: 11px 16px !important;
+  line-height: 1.5 !important;
+  box-shadow: none !important;
+}
+
+/* Checkboxes and radios keep their native look */
+input[type="checkbox"],
+input[type="radio"] {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  width: auto !important;
+  border: revert !important;
+  border-radius: revert !important;
+  box-shadow: none !important;
+  background-color: revert !important;
+  padding: revert !important;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
   background-color: var(--bg) !important;
 }
 
