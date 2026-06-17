@@ -261,9 +261,19 @@ export async function getUserRole(userId: string): Promise<string> {
 export interface ProfileRow {
   id: string;
   name?: string;
-  batch?: string;
+  email?: string;
+  phone?: string;
+  qualification?: string;
   course?: string;
+  domain?: string;
+  batch?: string;
   role?: string;
+  has_resume?: boolean;
+}
+
+export interface StudentWithResume extends ProfileRow {
+  experience_count: number;
+  resume: Resume | null;
 }
 
 export async function fetchAllStudents(): Promise<{ students: ProfileRow[]; error: string | null }> {
@@ -276,5 +286,83 @@ export async function fetchAllStudents(): Promise<{ students: ProfileRow[]; erro
     return { students, error: null };
   } catch (e) {
     return { students: [], error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function fetchAllStudentsWithResumes(): Promise<{
+  students: StudentWithResume[];
+  error: string | null;
+}> {
+  const client = getSupabaseClient();
+  if (!client) return { students: [], error: "Supabase client is not configured." };
+  try {
+    const [profilesRes, resumesRes] = await Promise.all([
+      client.from("profiles").select("*"),
+      client.from("resumes").select("id, resume_data"),
+    ]);
+
+    if (profilesRes.error) throw profilesRes.error;
+
+    // Build a map of userId -> resume_data
+    const resumeMap = new Map<string, Resume>();
+    if (!resumesRes.error && resumesRes.data) {
+      for (const row of resumesRes.data as { id: string; resume_data: Resume }[]) {
+        if (row.id && row.resume_data) {
+          resumeMap.set(row.id, row.resume_data);
+        }
+      }
+    }
+
+    const rawStudents = ((profilesRes.data || []) as ProfileRow[]).filter(
+      (p) => p.role === "student"
+    );
+
+    const students: StudentWithResume[] = rawStudents.map((profile) => {
+      const resume = resumeMap.get(profile.id) ?? null;
+      const phone =
+        profile.phone ||
+        (resume?.personal?.phone ?? undefined);
+      const qualification =
+        profile.qualification ||
+        (resume?.education?.[0]?.degree ?? undefined);
+      const domain = profile.domain || profile.course;
+      const experience_count = resume?.experience?.length ?? 0;
+
+      return {
+        ...profile,
+        phone,
+        qualification,
+        domain,
+        has_resume: resume !== null,
+        experience_count,
+        resume,
+      };
+    });
+
+    return { students, error: null };
+  } catch (e) {
+    return { students: [], error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function saveResumeForUser(
+  userId: string,
+  resumeData: Resume
+): Promise<{ ok: boolean; error: string | null }> {
+  const client = getSupabaseClient();
+  if (!client) return { ok: false, error: "Supabase client is not configured." };
+  if (!userId) {
+    return { ok: false, error: "No user ID provided." };
+  }
+  try {
+    const { error } = await client
+      .from("resumes")
+      .upsert({ id: userId, resume_data: resumeData });
+    if (error) throw error;
+    return { ok: true, error: null };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("Error saving resume for user:", msg);
+    return { ok: false, error: msg };
   }
 }

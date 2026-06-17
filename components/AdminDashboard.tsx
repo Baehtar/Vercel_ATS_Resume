@@ -1,8 +1,13 @@
 // components/AdminDashboard.tsx - Admin view of all students and their resumes
 "use client";
 
-import { useEffect, useState } from "react";
-import { fetchAllStudents, loadResume, signOutStudent, type ProfileRow } from "@/lib/supabaseClient";
+import { useEffect, useState, useMemo } from "react";
+import {
+  fetchAllStudentsWithResumes,
+  saveResumeForUser,
+  signOutStudent,
+  type StudentWithResume,
+} from "@/lib/supabaseClient";
 import { generateResumeHtml, TEMPLATE_OPTIONS } from "@/lib/resumeTemplates";
 import type { Resume, TemplateId } from "@/lib/types";
 import ResumePreview, { printResume } from "./ResumePreview";
@@ -10,149 +15,411 @@ import KeywordsEditor from "./KeywordsEditor";
 import BatchesEditor from "./BatchesEditor";
 
 type AdminTab = "students" | "keywords" | "batches";
+type ResumePanel = "preview" | "edit";
+
+interface EditState {
+  studentId: string;
+  studentName: string;
+  draft: Resume;
+}
+
+function blankResume(): Resume {
+  return {
+    personal: { fullName: "", headline: "", email: "", phone: "", location: "", linkedin: "", github: "", website: "" },
+    summary: "",
+    experience: [],
+    education: [],
+    projects: [],
+    skills: [],
+    certifications: [],
+  };
+}
 
 export default function AdminDashboard({ onSignOut }: { onSignOut: () => void }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("students");
-  const [students, setStudents] = useState<ProfileRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [courseFilter, setCourseFilter] = useState("All");
-  const [viewingId, setViewingId] = useState<string | null>(null);
-  const [viewingName, setViewingName] = useState("Student");
-  const [resume, setResume] = useState<Resume | null>(null);
-  const [templateId, setTemplateId] = useState<TemplateId>("modern");
+  const [students, setStudents] = useState<StudentWithResume[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [searchName, setSearchName] = useState("");
+  const [filterCourse, setFilterCourse] = useState("All");
+  const [filterResume, setFilterResume] = useState<"All" | "Saved" | "Not saved">("All");
+  const [filterExp, setFilterExp] = useState<"All" | "0" | "1+" | "3+">("All");
+
+  const [selectedStudent, setSelectedStudent] = useState<StudentWithResume | null>(null);
+  const [resumePanel, setResumePanel] = useState<ResumePanel>("preview");
+  const [templateId, setTemplateId] = useState<TemplateId>("modern");
+
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMsg, setPushMsg] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     (async () => {
-      const res = await fetchAllStudents();
+      setLoading(true);
+      const res = await fetchAllStudentsWithResumes();
       setStudents(res.students);
-      setError(res.error);
+      setLoadError(res.error);
       setLoading(false);
     })();
   }, []);
 
-  const filtered =
-    courseFilter === "All" ? students : students.filter((s) => s.course === courseFilter);
+  const filtered = useMemo(() => {
+    return students.filter((s) => {
+      const nameMatch =
+        !searchName ||
+        (s.name || "").toLowerCase().includes(searchName.toLowerCase()) ||
+        (s.email || "").toLowerCase().includes(searchName.toLowerCase());
+      const courseMatch = filterCourse === "All" || s.course === filterCourse;
+      const resumeMatch =
+        filterResume === "All" ||
+        (filterResume === "Saved" && s.has_resume) ||
+        (filterResume === "Not saved" && !s.has_resume);
+      const expMatch =
+        filterExp === "All" ||
+        (filterExp === "0" && s.experience_count === 0) ||
+        (filterExp === "1+" && s.experience_count >= 1) ||
+        (filterExp === "3+" && s.experience_count >= 3);
+      return nameMatch && courseMatch && resumeMatch && expMatch;
+    });
+  }, [students, searchName, filterCourse, filterResume, filterExp]);
 
-  const viewResume = async (student: ProfileRow) => {
-    setViewingId(student.id);
-    setViewingName(student.name || "Student");
-    setResume(null);
-    const r = await loadResume(student.id);
-    setResume(r);
+  const openStudent = (s: StudentWithResume) => {
+    setSelectedStudent(s);
+    setResumePanel("preview");
+    setPushMsg(null);
+    const baseDraft = s.resume ? structuredClone(s.resume) : blankResume();
+    setEditState({ studentId: s.id, studentName: s.name || "Student", draft: baseDraft });
   };
 
-  const html = resume ? generateResumeHtml(resume, templateId) : "";
+  const patchDraft = (fn: (d: Resume) => void) => {
+    if (!editState) return;
+    const next = structuredClone(editState.draft);
+    fn(next);
+    setEditState({ ...editState, draft: next });
+  };
+
+  const downloadEditedPdf = () => {
+    if (!editState) return;
+    printResume(generateResumeHtml(editState.draft, templateId));
+  };
+
+  const pushChanges = async () => {
+    if (!editState) return;
+    const confirmed = window.confirm(
+      `Push resume changes to ${editState.studentName}?\n\nThis will OVERWRITE their saved resume. This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setPushBusy(true);
+    setPushMsg(null);
+    const res = await saveResumeForUser(editState.studentId, editState.draft);
+    setPushBusy(false);
+    if (res.ok) {
+      setPushMsg({ kind: "success", text: `Resume saved for ${editState.studentName}.` });
+      const refreshed = await fetchAllStudentsWithResumes();
+      setStudents(refreshed.students);
+      if (selectedStudent) {
+        const updated = refreshed.students.find((s) => s.id === selectedStudent.id);
+        if (updated) setSelectedStudent(updated);
+      }
+    } else {
+      setPushMsg({ kind: "error", text: res.error || "Failed to save." });
+    }
+  };
+
+  const previewHtml = selectedStudent?.resume
+    ? generateResumeHtml(selectedStudent.resume, templateId)
+    : "";
+  const editPreviewHtml = editState ? generateResumeHtml(editState.draft, templateId) : "";
+
+  const handleSignOut = async () => {
+    await signOutStudent();
+    onSignOut();
+  };
 
   return (
     <div className="main">
       <h2 style={{ color: "var(--blue-600)" }}>🛡️ Admin Dashboard</h2>
 
-      {/* Admin tabs */}
       <div className="tabs">
-        <button className={`tab ${activeTab === "students" ? "active" : ""}`} onClick={() => setActiveTab("students")}>
-          👥 Students
-        </button>
-        <button className={`tab ${activeTab === "keywords" ? "active" : ""}`} onClick={() => setActiveTab("keywords")}>
-          ⚙️ Keyword Options
-        </button>
-        <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>
-          🎓 Batches
-        </button>
+        <button className={`tab ${activeTab === "students" ? "active" : ""}`} onClick={() => setActiveTab("students")}>👥 Students</button>
+        <button className={`tab ${activeTab === "keywords" ? "active" : ""}`} onClick={() => setActiveTab("keywords")}>⚙️ Keyword Options</button>
+        <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>🎓 Batches</button>
       </div>
 
       {activeTab === "batches" && (
-        <>
-          <BatchesEditor />
-          <hr />
-          <button className="full" onClick={async () => { await signOutStudent(); onSignOut(); }}>
-            🚪 Sign Out
-          </button>
-        </>
+        <><BatchesEditor /><hr /><button className="full" onClick={handleSignOut}>🚪 Sign Out</button></>
       )}
 
       {activeTab === "keywords" && (
-        <>
-          <KeywordsEditor />
-          <hr />
-          <button className="full" onClick={async () => { await signOutStudent(); onSignOut(); }}>
-            🚪 Sign Out
-          </button>
-        </>
+        <><KeywordsEditor /><hr /><button className="full" onClick={handleSignOut}>🚪 Sign Out</button></>
       )}
 
       {activeTab === "students" && (
         <>
-          {error && <div className="alert alert-error">Could not fetch students: {error}</div>}
+          {loadError && <div className="alert alert-error">Could not fetch students: {loadError}</div>}
 
-          <h3>👥 Registered Students ({students.length})</h3>
-          <label className="field-label">Filter by Course</label>
-          <select
-            style={{ maxWidth: 280 }}
-            value={courseFilter}
-            onChange={(e) => setCourseFilter(e.target.value)}
-          >
-            {["All", "Data Engineer", "Data Analyst"].map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-          <p className="caption">Showing {filtered.length} students</p>
-          <hr />
+          {/* Filter bar */}
+          <div className="admin-filter-bar">
+            <div>
+              <label className="field-label" style={{ margin: 0 }}>Search</label>
+              <input
+                type="text"
+                placeholder="Name or email…"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                style={{ minWidth: 180 }}
+              />
+            </div>
+            <div>
+              <label className="field-label" style={{ margin: 0 }}>Course</label>
+              <select value={filterCourse} onChange={(e) => setFilterCourse(e.target.value)}>
+                {["All", "Data Engineer", "Data Analyst"].map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label" style={{ margin: 0 }}>Resume</label>
+              <select value={filterResume} onChange={(e) => setFilterResume(e.target.value as "All" | "Saved" | "Not saved")}>
+                {["All", "Saved", "Not saved"].map((v) => <option key={v}>{v}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label" style={{ margin: 0 }}>Experience</label>
+              <select value={filterExp} onChange={(e) => setFilterExp(e.target.value as "All" | "0" | "1+" | "3+")}>
+                <option value="All">All</option>
+                <option value="0">0 entries</option>
+                <option value="1+">1+ entries</option>
+                <option value="3+">3+ entries</option>
+              </select>
+            </div>
+          </div>
+          <p className="caption" style={{ margin: "4px 0 12px" }}>
+            {loading ? "Loading…" : `Showing ${filtered.length} of ${students.length} students`}
+          </p>
 
           {loading ? (
-            <p className="muted">
-              <span className="spinner" />Loading students…
-            </p>
+            <p className="muted"><span className="spinner" />Loading students…</p>
           ) : (
-            filtered.map((s) => (
-              <div
-                key={s.id}
-                className="panel"
-                style={{ display: "flex", alignItems: "center", gap: 16, padding: 14 }}
-              >
-                <div style={{ flex: 2 }}><strong>{s.name || "N/A"}</strong></div>
-                <div style={{ flex: 2 }}>{s.batch || "N/A"}</div>
-                <div style={{ flex: 1.5 }}>{s.course || "N/A"}</div>
-                <div style={{ flex: 1 }}>
-                  <button onClick={() => viewResume(s)}>View Resume</button>
-                </div>
-              </div>
-            ))
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name / Email</th>
+                    <th>Phone</th>
+                    <th>Qualification</th>
+                    <th>Course</th>
+                    <th>Domain</th>
+                    <th>Experience</th>
+                    <th>Resume</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: 24 }}>
+                        No students match the current filters.
+                      </td>
+                    </tr>
+                  ) : filtered.map((s) => (
+                    <tr key={s.id}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{s.name || "N/A"}</div>
+                        {s.email && <div style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>{s.email}</div>}
+                      </td>
+                      <td style={{ color: "var(--text-muted)" }}>{s.phone || "N/A"}</td>
+                      <td style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.qualification || "N/A"}</td>
+                      <td>{s.course || "N/A"}</td>
+                      <td>{s.domain || s.course || "N/A"}</td>
+                      <td style={{ textAlign: "center" }}>
+                        {s.experience_count > 0
+                          ? `${s.experience_count} entr${s.experience_count === 1 ? "y" : "ies"}`
+                          : <span className="badge-gray">0</span>}
+                      </td>
+                      <td>
+                        {s.has_resume
+                          ? <span className="badge-green">✓ Saved</span>
+                          : <span className="badge-gray">— None</span>}
+                      </td>
+                      <td>
+                        <button style={{ padding: "5px 12px", fontSize: "0.78rem" }} onClick={() => openStudent(s)}>
+                          View / Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
 
-          {viewingId && (
-            <>
-              <hr />
-              <h3>📄 Resume — {viewingName}</h3>
-              {resume ? (
-                <>
-                  <label className="field-label">Template</label>
-                  <select
-                    style={{ maxWidth: 280 }}
-                    value={templateId}
-                    onChange={(e) => setTemplateId(e.target.value as TemplateId)}
-                  >
-                    {(Object.keys(TEMPLATE_OPTIONS) as TemplateId[]).map((t) => (
-                      <option key={t} value={t}>{TEMPLATE_OPTIONS[t]}</option>
-                    ))}
-                  </select>
-                  <div style={{ margin: "12px 0" }}>
-                    <button className="primary full" onClick={() => printResume(html)}>
-                      🖨 Download Student Resume PDF
+          {/* Resume panel */}
+          {selectedStudent && editState && (
+            <div className="panel" style={{ marginTop: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                <h3 style={{ margin: 0 }}>
+                  📄 {selectedStudent.name || "Student"}
+                  {selectedStudent.course && (
+                    <span className="badge-gray" style={{ marginLeft: 10, fontWeight: 400, fontSize: "0.8rem" }}>{selectedStudent.course}</span>
+                  )}
+                </h3>
+                <button className="ghost" style={{ padding: "4px 10px", fontSize: "0.8rem" }} onClick={() => { setSelectedStudent(null); setEditState(null); }}>
+                  ✕ Close
+                </button>
+              </div>
+
+              <div className="sub-tabs">
+                <button className={`sub-tab ${resumePanel === "preview" ? "active" : ""}`} onClick={() => setResumePanel("preview")}>👁 Preview</button>
+                <button className={`sub-tab ${resumePanel === "edit" ? "active" : ""}`} onClick={() => setResumePanel("edit")}>✏️ Edit Resume</button>
+              </div>
+
+              {resumePanel === "preview" && (
+                selectedStudent.resume ? (
+                  <>
+                    <label className="field-label">Template</label>
+                    <select style={{ maxWidth: 280 }} value={templateId} onChange={(e) => setTemplateId(e.target.value as TemplateId)}>
+                      {(Object.keys(TEMPLATE_OPTIONS) as TemplateId[]).map((t) => <option key={t} value={t}>{TEMPLATE_OPTIONS[t]}</option>)}
+                    </select>
+                    <div style={{ margin: "12px 0" }}>
+                      <button className="primary full" onClick={() => printResume(previewHtml)}>🖨 Download Student Resume PDF</button>
+                    </div>
+                    <ResumePreview html={previewHtml} />
+                  </>
+                ) : (
+                  <div className="alert alert-warning">This student hasn&apos;t saved a resume yet. Switch to the Edit tab to create one.</div>
+                )
+              )}
+
+              {resumePanel === "edit" && (
+                <div>
+                  <details className="expander" open>
+                    <summary>👤 Personal Details</summary>
+                    <div className="expander-body">
+                      <div className="grid-2">
+                        <div>
+                          <label className="field-label">Full Name</label>
+                          <input value={editState.draft.personal.fullName} onChange={(e) => patchDraft((d) => (d.personal.fullName = e.target.value))} />
+                        </div>
+                        <div>
+                          <label className="field-label">Phone</label>
+                          <input value={editState.draft.personal.phone} onChange={(e) => patchDraft((d) => (d.personal.phone = e.target.value))} />
+                        </div>
+                      </div>
+                      <div className="grid-2">
+                        <div>
+                          <label className="field-label">Email</label>
+                          <input value={editState.draft.personal.email} onChange={(e) => patchDraft((d) => (d.personal.email = e.target.value))} />
+                        </div>
+                        <div>
+                          <label className="field-label">Headline</label>
+                          <input value={editState.draft.personal.headline} placeholder="Data Engineer | ETL | Pipelines" onChange={(e) => patchDraft((d) => (d.personal.headline = e.target.value))} />
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+
+                  <details className="expander">
+                    <summary>📝 Summary</summary>
+                    <div className="expander-body">
+                      <textarea rows={5} value={editState.draft.summary} onChange={(e) => patchDraft((d) => (d.summary = e.target.value))} placeholder="Professional summary…" />
+                    </div>
+                  </details>
+
+                  <details className="expander">
+                    <summary>💼 Experience ({editState.draft.experience.length} entries)</summary>
+                    <div className="expander-body">
+                      {editState.draft.experience.map((exp, i) => (
+                        <div key={i} style={{ marginBottom: 12 }}>
+                          <strong style={{ fontSize: "0.9rem" }}>Entry {i + 1}</strong>
+                          <div className="grid-2" style={{ marginTop: 6 }}>
+                            <div>
+                              <label className="field-label">Company</label>
+                              <input value={exp.company} onChange={(e) => patchDraft((d) => (d.experience[i].company = e.target.value))} />
+                            </div>
+                            <div>
+                              <label className="field-label">Role / Title</label>
+                              <input value={exp.role} onChange={(e) => patchDraft((d) => (d.experience[i].role = e.target.value))} />
+                            </div>
+                          </div>
+                          <div className="grid-2">
+                            <div>
+                              <label className="field-label">Start Date</label>
+                              <input value={exp.startDate} placeholder="e.g. 2023-01" onChange={(e) => patchDraft((d) => (d.experience[i].startDate = e.target.value))} />
+                            </div>
+                            <div>
+                              <label className="field-label">End Date</label>
+                              <input value={exp.endDate} placeholder="e.g. 2024-06 or Present" onChange={(e) => patchDraft((d) => (d.experience[i].endDate = e.target.value))} />
+                            </div>
+                          </div>
+                          <label className="field-label">Bullets</label>
+                          {exp.bullets.map((b, bi) => (
+                            <div className="bullet-row" key={bi}>
+                              <input value={b} placeholder="Action verb + metric…" onChange={(e) => patchDraft((d) => (d.experience[i].bullets[bi] = e.target.value))} />
+                              <button className="icon-btn" onClick={() => patchDraft((d) => d.experience[i].bullets.splice(bi, 1))}>✖</button>
+                            </div>
+                          ))}
+                          <div className="btn-row" style={{ marginTop: 6 }}>
+                            <button onClick={() => patchDraft((d) => d.experience[i].bullets.push(""))}>+ Bullet</button>
+                            <button onClick={() => patchDraft((d) => d.experience.splice(i, 1))}>🗑 Remove Entry</button>
+                          </div>
+                          <hr />
+                        </div>
+                      ))}
+                      <button className="full" onClick={() => patchDraft((d) => d.experience.push({ company: "", role: "", location: "", startDate: "", endDate: "", bullets: [""] }))}>
+                        + Add Experience Entry
+                      </button>
+                    </div>
+                  </details>
+
+                  <details className="expander">
+                    <summary>🛠 Skills</summary>
+                    <div className="expander-body">
+                      {editState.draft.skills.map((sg, i) => (
+                        <div key={i} style={{ marginBottom: 10 }}>
+                          <div className="grid-2">
+                            <div>
+                              <label className="field-label">Group Name</label>
+                              <input value={sg.category} onChange={(e) => patchDraft((d) => (d.skills[i].category = e.target.value))} />
+                            </div>
+                            <div>
+                              <label className="field-label">Skills (comma-separated)</label>
+                              <input value={sg.list} placeholder="Python, SQL, Spark…" onChange={(e) => patchDraft((d) => (d.skills[i].list = e.target.value))} />
+                            </div>
+                          </div>
+                          <button style={{ marginTop: 6 }} onClick={() => patchDraft((d) => d.skills.splice(i, 1))}>🗑 Remove Group</button>
+                          <hr />
+                        </div>
+                      ))}
+                      <button className="full" onClick={() => patchDraft((d) => d.skills.push({ category: "", list: "" }))}>+ Add Skill Group</button>
+                    </div>
+                  </details>
+
+                  <details className="expander">
+                    <summary>👁 Live Preview (edit draft)</summary>
+                    <div className="expander-body">
+                      <label className="field-label">Template</label>
+                      <select style={{ maxWidth: 280 }} value={templateId} onChange={(e) => setTemplateId(e.target.value as TemplateId)}>
+                        {(Object.keys(TEMPLATE_OPTIONS) as TemplateId[]).map((t) => <option key={t} value={t}>{TEMPLATE_OPTIONS[t]}</option>)}
+                      </select>
+                      <div style={{ marginTop: 12 }}><ResumePreview html={editPreviewHtml} /></div>
+                    </div>
+                  </details>
+
+                  {pushMsg && <div className={`alert alert-${pushMsg.kind}`} style={{ marginTop: 12 }}>{pushMsg.text}</div>}
+
+                  <div className="btn-row" style={{ marginTop: 16 }}>
+                    <button className="primary" onClick={downloadEditedPdf}>⬇ Download Edited PDF</button>
+                    <button className="primary" onClick={pushChanges} disabled={pushBusy}>
+                      {pushBusy && <span className="spinner" />}☁️ Push Changes to Student
                     </button>
                   </div>
-                  <ResumePreview html={html} />
-                </>
-              ) : (
-                <p className="muted">This student hasn&apos;t saved a resume yet.</p>
+                </div>
               )}
-            </>
+            </div>
           )}
 
           <hr />
-          <button className="full" onClick={async () => { await signOutStudent(); onSignOut(); }}>
-            🚪 Sign Out
-          </button>
+          <button className="full" onClick={handleSignOut}>🚪 Sign Out</button>
         </>
       )}
     </div>
