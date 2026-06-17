@@ -7,13 +7,13 @@ import { getUserFromAuthHeader } from "@/lib/supabaseServer";
 
 export const runtime = "nodejs";
 
-const URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /** Anonymous client — for public reads */
 function anonClient() {
-  return createClient(URL, ANON);
+  return createClient(SUPABASE_URL, ANON);
 }
 
 /**
@@ -22,7 +22,7 @@ function anonClient() {
  * The service role key is server-only and never sent to the browser.
  */
 function serviceClient() {
-  return createClient(URL, SERVICE_ROLE!, {
+  return createClient(SUPABASE_URL, SERVICE_ROLE!, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
