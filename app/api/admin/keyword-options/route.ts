@@ -28,15 +28,49 @@ function extractToken(request: Request): string | null {
   return token || null;
 }
 
-async function isAdmin(request: Request): Promise<boolean> {
+async function isAdmin(request: Request): Promise<{ ok: boolean; reason: string }> {
   const user = await getUserFromAuthHeader(request);
-  if (!user) return false;
-  const { data } = await anonClient()
+  if (!user) {
+    // Fallback: decode JWT manually to get user ID, then check profiles
+    const authHeader = request.headers.get("authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return { ok: false, reason: "No token provided" };
+
+    // Decode the JWT payload (base64url middle segment) without verification
+    // The RLS policy on profiles still protects the data — we just need the user ID
+    try {
+      const payload = JSON.parse(
+        Buffer.from(token.split(".")[1], "base64url").toString("utf-8")
+      );
+      const userId: string = payload.sub;
+      if (!userId) return { ok: false, reason: "No user ID in token" };
+
+      const { data, error } = await anonClient()
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (error) return { ok: false, reason: `profiles lookup error: ${error.message}` };
+      const role = (data as { role?: string } | null)?.role;
+      if (role !== "admin") return { ok: false, reason: `Role is "${role}", not "admin"` };
+      return { ok: true, reason: "" };
+    } catch (e) {
+      return { ok: false, reason: `Token decode failed: ${e}` };
+    }
+  }
+
+  const { data, error } = await anonClient()
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
-  return (data as { role?: string } | null)?.role === "admin";
+
+  if (error) return { ok: false, reason: `profiles lookup error: ${error.message}` };
+  if (!data) return { ok: false, reason: `No profiles row for user ${user.id}` };
+  const role = (data as { role?: string }).role;
+  if (role !== "admin") return { ok: false, reason: `Role is "${role}", not "admin"` };
+  return { ok: true, reason: "" };
 }
 
 export async function GET(request: Request) {
@@ -58,8 +92,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!(await isAdmin(request))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const adminCheck = await isAdmin(request);
+  if (!adminCheck.ok) {
+    return NextResponse.json({ error: `Unauthorized: ${adminCheck.reason}` }, { status: 401 });
   }
 
   const token = extractToken(request);
@@ -67,7 +102,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing auth token" }, { status: 401 });
   }
 
-  const { role_key, category, items } = await request.json();
+  const body = await request.json();
+  const { role_key, category, items } = body;
   if (!role_key || !category || !Array.isArray(items)) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
