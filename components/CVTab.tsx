@@ -327,6 +327,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                     placeholder="e.g. PySpark, Databricks, Azure Data Factory"
                     onChange={setAiTools}
                   />
+                  <p className="caption" style={{ margin: "2px 0 0" }}>
+                    Not in the list? Type any tool directly in the field above.
+                  </p>
                   <label className="field-label">Client Name (optional):</label>
                   <input
                     value={aiClient}
@@ -621,6 +624,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                   </option>
                 ))}
               </select>
+              <p className="caption" style={{ margin: "4px 0 0" }}>
+                Don&apos;t see your project? Add it manually below using the blank project form.
+              </p>
               {presetSelect && (
                 <button className="primary full" style={{ marginTop: 8 }} onClick={addPresetProject}>
                   Add Selected Project
@@ -645,6 +651,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                         placeholder="e.g. Python, SQL, Power BI"
                         onChange={(v) => patch((d) => (d.projects[i].tech = v))}
                       />
+                      <p className="caption" style={{ margin: "2px 0 0" }}>
+                        Not in the list? Type it directly in the field above.
+                      </p>
                     </div>
                   </div>
                   <label className="field-label">Link</label>
@@ -698,6 +707,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                     placeholder="Add custom skills separated by commas"
                     onChange={(v) => patch((d) => (d.skills[i].list = v))}
                   />
+                  <p className="caption" style={{ margin: "2px 0 0" }}>
+                    Not in the suggestions? Type any skill directly — separate with commas.
+                  </p>
                   <button
                     style={{ marginTop: 8 }}
                     onClick={() => patch((d) => d.skills.splice(i, 1))}
@@ -727,6 +739,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                 <option value="Data Analytics with Power BI">Data Analytics with Power BI</option>
                 <option value="Microsoft Azure Data Fundamentals DP-900">Microsoft Azure Data Fundamentals DP-900</option>
               </select>
+              <p className="caption" style={{ margin: "4px 0 0" }}>
+                Have a different certification? Use the &quot;Add Certification&quot; button below to enter it manually.
+              </p>
               {certPreset && (
                 <button
                   className="primary full"
