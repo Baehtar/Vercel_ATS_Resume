@@ -9,23 +9,22 @@ export const runtime = "nodejs";
 
 const URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /** Anonymous client — for public reads */
 function anonClient() {
   return createClient(URL, ANON);
 }
 
-/** Authenticated client — carries the user's JWT so auth.uid() resolves in RLS */
-function authedClient(jwt: string) {
-  return createClient(URL, ANON, {
-    global: { headers: { Authorization: `Bearer ${jwt}` } },
+/**
+ * Service-role client — bypasses RLS for trusted server-side writes.
+ * Safe because we verify isAdmin() in our own code before using it.
+ * The service role key is server-only and never sent to the browser.
+ */
+function serviceClient() {
+  return createClient(URL, SERVICE_ROLE!, {
+    auth: { autoRefreshToken: false, persistSession: false },
   });
-}
-
-function extractToken(request: Request): string | null {
-  const header = request.headers.get("authorization") || "";
-  const token = header.replace(/^Bearer\s+/i, "").trim();
-  return token || null;
 }
 
 async function isAdmin(request: Request): Promise<{ ok: boolean; reason: string }> {
@@ -97,9 +96,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Unauthorized: ${adminCheck.reason}` }, { status: 401 });
   }
 
-  const token = extractToken(request);
-  if (!token) {
-    return NextResponse.json({ error: "Missing auth token" }, { status: 401 });
+  if (!SERVICE_ROLE) {
+    return NextResponse.json(
+      { error: "Server missing SUPABASE_SERVICE_ROLE_KEY env variable." },
+      { status: 500 }
+    );
   }
 
   const body = await request.json();
@@ -108,8 +109,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  // Use the authenticated client so auth.uid() resolves and RLS allows the write
-  const { error } = await authedClient(token)
+  // Service-role write — RLS is bypassed; admin status already verified above.
+  const { error } = await serviceClient()
     .from("keyword_options")
     .upsert(
       { role_key, category, items, updated_at: new Date().toISOString() },
