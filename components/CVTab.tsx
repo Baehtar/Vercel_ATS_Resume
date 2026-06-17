@@ -1,12 +1,12 @@
 // components/CVTab.tsx - Resume builder + ATS optimizer (My CV tab)
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { Resume, TemplateId } from "@/lib/types";
 import { analyzeResume } from "@/lib/atsAnalyzer";
 import { generateResumeHtml, TEMPLATE_OPTIONS } from "@/lib/resumeTemplates";
 import { loadRoleKeywords } from "@/lib/roleKeywords";
-import { getProjectNames, getProjectByName } from "@/lib/projectsDb";
+import { getProjectNames, getProjectByName, loadProjectPresets } from "@/lib/projectsDb";
 import { toDateInputValue, safeFileName } from "@/lib/resumeUtils";
 import { getAccessToken } from "@/lib/supabaseClient";
 import { useKeywordOptions } from "@/lib/useKeywordOptions";
@@ -47,6 +47,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
   const report = useMemo(() => analyzeResume(resume, targetRole), [resume, targetRole]);
   const { tools: keywordOptions, skills: skillOptions } = useKeywordOptions(targetRole);
   const roleTitle = loadRoleKeywords()[targetRole]?.title || "Role";
+
+  // Load project presets from Supabase on mount (falls back to static list)
+  useEffect(() => { loadProjectPresets(); }, []);
 
   const patch = (fn: (draft: Resume) => void) => {
     const next: Resume = structuredClone(resume);

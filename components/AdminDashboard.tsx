@@ -13,8 +13,9 @@ import type { Resume, TemplateId } from "@/lib/types";
 import ResumePreview, { printResume } from "./ResumePreview";
 import KeywordsEditor from "./KeywordsEditor";
 import BatchesEditor from "./BatchesEditor";
+import ProjectsEditor from "./ProjectsEditor";
 
-type AdminTab = "students" | "keywords" | "batches";
+type AdminTab = "students" | "keywords" | "batches" | "projects";
 type ResumePanel = "preview" | "edit";
 
 interface EditState {
@@ -42,7 +43,17 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
   const [loading, setLoading] = useState(true);
 
   const [searchName, setSearchName] = useState("");
-  const [filterCourse, setFilterCourse] = useState("All");
+  const [filterBatch, setFilterBatch] = useState("All");
+  const [batchOptions, setBatchOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/signup-options?category=batches")
+      .then((r) => r.json())
+      .then((json: { items?: string[] }) => {
+        if (json.items?.length) setBatchOptions(json.items);
+      })
+      .catch(() => {});
+  }, []);
   const [filterResume, setFilterResume] = useState<"All" | "Saved" | "Not saved">("All");
   const [filterExp, setFilterExp] = useState<"All" | "0" | "1+" | "3+">("All");
 
@@ -70,7 +81,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
         !searchName ||
         (s.name || "").toLowerCase().includes(searchName.toLowerCase()) ||
         (s.email || "").toLowerCase().includes(searchName.toLowerCase());
-      const courseMatch = filterCourse === "All" || s.course === filterCourse;
+      const courseMatch = filterBatch === "All" || s.batch === filterBatch;
       const resumeMatch =
         filterResume === "All" ||
         (filterResume === "Saved" && s.has_resume) ||
@@ -82,7 +93,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
         (filterExp === "3+" && s.experience_count >= 3);
       return nameMatch && courseMatch && resumeMatch && expMatch;
     });
-  }, [students, searchName, filterCourse, filterResume, filterExp]);
+  }, [students, searchName, filterBatch, filterResume, filterExp]);
 
   const openStudent = (s: StudentWithResume) => {
     setSelectedStudent(s);
@@ -145,7 +156,12 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
         <button className={`tab ${activeTab === "students" ? "active" : ""}`} onClick={() => setActiveTab("students")}>👥 Students</button>
         <button className={`tab ${activeTab === "keywords" ? "active" : ""}`} onClick={() => setActiveTab("keywords")}>⚙️ Keyword Options</button>
         <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>🎓 Batches</button>
+        <button className={`tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>💻 Projects</button>
       </div>
+
+      {activeTab === "projects" && (
+        <><ProjectsEditor /><hr /><button className="full" onClick={handleSignOut}>🚪 Sign Out</button></>
+      )}
 
       {activeTab === "batches" && (
         <><BatchesEditor /><hr /><button className="full" onClick={handleSignOut}>🚪 Sign Out</button></>
@@ -172,9 +188,10 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
               />
             </div>
             <div>
-              <label className="field-label" style={{ margin: 0 }}>Course</label>
-              <select value={filterCourse} onChange={(e) => setFilterCourse(e.target.value)}>
-                {["All", "Data Engineer", "Data Analyst"].map((c) => <option key={c}>{c}</option>)}
+              <label className="field-label" style={{ margin: 0 }}>Batch</label>
+              <select value={filterBatch} onChange={(e) => setFilterBatch(e.target.value)}>
+                <option value="All">All batches</option>
+                {batchOptions.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
             </div>
             <div>
@@ -232,9 +249,44 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                       <td>{s.course || "N/A"}</td>
                       <td>{s.domain || s.course || "N/A"}</td>
                       <td style={{ textAlign: "center" }}>
-                        {s.experience_count > 0
-                          ? `${s.experience_count} entr${s.experience_count === 1 ? "y" : "ies"}`
-                          : <span className="badge-gray">0</span>}
+                        {s.experience_count === 0
+                          ? <span className="badge-gray">0</span>
+                          : (
+                            <details style={{ cursor: "pointer", userSelect: "none" }}>
+                              <summary style={{
+                                listStyle: "none",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                fontSize: "0.82rem",
+                                fontWeight: 600,
+                                color: "var(--blue-600)",
+                                cursor: "pointer",
+                              }}>
+                                {s.experience_count} entr{s.experience_count === 1 ? "y" : "ies"} ▾
+                              </summary>
+                              <div style={{
+                                position: "absolute",
+                                zIndex: 50,
+                                background: "var(--panel)",
+                                border: "1px solid var(--border)",
+                                borderRadius: 8,
+                                padding: "8px 12px",
+                                marginTop: 4,
+                                minWidth: 220,
+                                boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                                fontSize: "0.82rem",
+                              }}>
+                                {s.resume?.experience?.map((exp, ei) => (
+                                  <div key={ei} style={{ padding: "4px 0", borderBottom: ei < (s.experience_count - 1) ? "1px solid var(--border)" : "none" }}>
+                                    <div style={{ fontWeight: 600 }}>{exp.role || "—"}</div>
+                                    <div style={{ color: "var(--text-muted)" }}>{exp.company}{exp.startDate ? ` · ${exp.startDate}–${exp.endDate || "Present"}` : ""}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )
+                        }
                       </td>
                       <td>
                         {s.has_resume
