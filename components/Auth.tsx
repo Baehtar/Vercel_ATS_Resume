@@ -12,7 +12,7 @@ import {
 } from "@/lib/supabaseClient";
 import type { AppUser } from "@/lib/types";
 
-const BATCH_OPTIONS = [
+const DEFAULT_BATCH_OPTIONS = [
   "Select your batch...",
   "Data Science Fellowship - Jan 2026",
   "Data Science Fellowship - Mar 2026",
@@ -41,9 +41,10 @@ export default function Auth({ onLogin }: Props) {
   const [loginPass, setLoginPass] = useState("");
 
   // Sign up
+  const [batchOptions, setBatchOptions] = useState<string[]>(DEFAULT_BATCH_OPTIONS);
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
-  const [regBatch, setRegBatch] = useState(BATCH_OPTIONS[0]);
+  const [regBatch, setRegBatch] = useState(DEFAULT_BATCH_OPTIONS[0]);
   const [regCourse, setRegCourse] = useState(COURSE_OPTIONS[0]);
   const [regPass, setRegPass] = useState("");
   const [regPassConf, setRegPassConf] = useState("");
@@ -73,6 +74,20 @@ export default function Auth({ onLogin }: Props) {
       if (event === "PASSWORD_RECOVERY") setIsRecovery(true);
     });
     return () => sub.subscription.unsubscribe();
+  }, []);
+
+  // Load the admin-managed batch list; fall back to defaults on any failure.
+  useEffect(() => {
+    fetch("/api/admin/signup-options?category=batches")
+      .then((r) => r.json())
+      .then((json: { items?: string[] }) => {
+        if (json.items && json.items.length > 0) {
+          setBatchOptions(["Select your batch...", ...json.items]);
+        }
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
   }, []);
 
   const clearQuery = () => {
@@ -125,7 +140,7 @@ export default function Auth({ onLogin }: Props) {
     if (
       !regName ||
       !regEmail ||
-      regBatch === BATCH_OPTIONS[0] ||
+      regBatch === batchOptions[0] ||
       regCourse === COURSE_OPTIONS[0] ||
       !regPass ||
       !regPassConf
@@ -308,7 +323,7 @@ export default function Auth({ onLogin }: Props) {
               />
               <label className="field-label">Batch Name/Number</label>
               <select value={regBatch} onChange={(e) => setRegBatch(e.target.value)}>
-                {BATCH_OPTIONS.map((b) => (
+                {batchOptions.map((b) => (
                   <option key={b}>{b}</option>
                 ))}
               </select>

@@ -7,8 +7,9 @@ import { generateResumeHtml, TEMPLATE_OPTIONS } from "@/lib/resumeTemplates";
 import type { Resume, TemplateId } from "@/lib/types";
 import ResumePreview, { printResume } from "./ResumePreview";
 import KeywordsEditor from "./KeywordsEditor";
+import BatchesEditor from "./BatchesEditor";
 
-type AdminTab = "students" | "keywords";
+type AdminTab = "students" | "keywords" | "batches";
 
 export default function AdminDashboard({ onSignOut }: { onSignOut: () => void }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("students");
@@ -55,7 +56,20 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
         <button className={`tab ${activeTab === "keywords" ? "active" : ""}`} onClick={() => setActiveTab("keywords")}>
           ⚙️ Keyword Options
         </button>
+        <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>
+          🎓 Batches
+        </button>
       </div>
+
+      {activeTab === "batches" && (
+        <>
+          <BatchesEditor />
+          <hr />
+          <button className="full" onClick={async () => { await signOutStudent(); onSignOut(); }}>
+            🚪 Sign Out
+          </button>
+        </>
+      )}
 
       {activeTab === "keywords" && (
         <>
