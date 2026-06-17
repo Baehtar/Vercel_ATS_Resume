@@ -103,6 +103,27 @@ export async function POST(request: Request) {
     );
   }
 
+  // Diagnostic: verify the configured key is actually a service_role key.
+  // Both anon and service keys are JWTs with a "role" claim.
+  let keyRole = "unknown";
+  try {
+    const payload = JSON.parse(
+      Buffer.from(SERVICE_ROLE.split(".")[1], "base64url").toString("utf-8")
+    );
+    keyRole = payload.role || "unknown";
+  } catch {
+    keyRole = "not-a-jwt";
+  }
+  if (keyRole !== "service_role") {
+    return NextResponse.json(
+      {
+        error: `SUPABASE_SERVICE_ROLE_KEY is set but its role claim is "${keyRole}", not "service_role". ` +
+          `You likely pasted the anon key. Copy the "service_role" secret from Supabase → Settings → API.`,
+      },
+      { status: 500 }
+    );
+  }
+
   const body = await request.json();
   const { role_key, category, items } = body;
   if (!role_key || !category || !Array.isArray(items)) {
