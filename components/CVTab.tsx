@@ -5,10 +5,11 @@ import { useMemo, useState } from "react";
 import type { Resume, TemplateId } from "@/lib/types";
 import { analyzeResume } from "@/lib/atsAnalyzer";
 import { generateResumeHtml, TEMPLATE_OPTIONS } from "@/lib/resumeTemplates";
-import { getKeywordOptions, getSkillOptions, loadRoleKeywords } from "@/lib/roleKeywords";
+import { loadRoleKeywords } from "@/lib/roleKeywords";
 import { getProjectNames, getProjectByName } from "@/lib/projectsDb";
 import { toDateInputValue, safeFileName } from "@/lib/resumeUtils";
 import { getAccessToken } from "@/lib/supabaseClient";
+import { useKeywordOptions } from "@/lib/useKeywordOptions";
 import KeywordInput from "./KeywordInput";
 import AtsAudit from "./AtsAudit";
 import ResumePreview, { printResume } from "./ResumePreview";
@@ -44,8 +45,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
   const [certPreset, setCertPreset] = useState("");
 
   const report = useMemo(() => analyzeResume(resume, targetRole), [resume, targetRole]);
-  const keywordOptions = useMemo(() => getKeywordOptions(targetRole), [targetRole]);
-  const skillOptions = useMemo(() => getSkillOptions(targetRole), [targetRole]);
+  const { tools: keywordOptions, skills: skillOptions } = useKeywordOptions(targetRole);
   const roleTitle = loadRoleKeywords()[targetRole]?.title || "Role";
 
   const patch = (fn: (draft: Resume) => void) => {
