@@ -250,14 +250,14 @@ export default function Auth({ onLogin }: Props) {
         </div>
       ) : !ready ? (
         <div className="panel">
-          <div className="alert alert-warning">⚠️ Supabase Connection Pending</div>
+          <div className="alert alert-warning">Supabase Connection Pending</div>
           <p className="caption">
             Set <code>NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
             <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in your environment (see{" "}
             <code>.env.local.example</code>) to activate authentication.
           </p>
           <button className="primary full" onClick={enterDemo}>
-            🔓 Enter Demo Mode (Skip Auth)
+            Enter Demo Mode (Skip Auth)
           </button>
         </div>
       ) : (
@@ -272,13 +272,13 @@ export default function Auth({ onLogin }: Props) {
               className={`tab ${activeTab === "in" ? "active" : ""}`}
               onClick={() => setActiveTab("in")}
             >
-              🔒 Sign In
+              Sign In
             </button>
             <button
               className={`tab ${activeTab === "up" ? "active" : ""}`}
               onClick={() => setActiveTab("up")}
             >
-              📝 Sign Up
+              Sign Up
             </button>
           </div>
 

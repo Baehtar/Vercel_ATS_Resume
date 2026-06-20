@@ -105,7 +105,7 @@ export default function ProjectsEditor() {
 
   return (
     <div>
-      <h3 style={{ margin: "0 0 4px" }}>💻 Preset Projects Editor</h3>
+      <h3 style={{ margin: "0 0 4px" }}>Preset Projects Editor</h3>
       <p className="caption" style={{ margin: "0 0 16px" }}>
         Manage the preset projects students can add to their resume from the dropdown.
         Changes take effect immediately for all students.
@@ -141,7 +141,7 @@ export default function ProjectsEditor() {
           {/* Add / Edit form */}
           {editing ? (
             <div className="panel" style={{ marginTop: 8, border: "1px solid var(--primary)" }}>
-              <h4 style={{ margin: "0 0 12px" }}>{editIdx === null ? "➕ Add New Project" : "✏️ Edit Project"}</h4>
+              <h4 style={{ margin: "0 0 12px" }}>{editIdx === null ? "Add New Project" : "Edit Project"}</h4>
               <label className="field-label">Project Name *</label>
               <input
                 value={editing.name}

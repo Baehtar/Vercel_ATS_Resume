@@ -145,7 +145,15 @@ export default function Home() {
   }
 
   if (role === "admin") {
-    return <AdminDashboard onSignOut={handleSignOut} />;
+    return (
+      <>
+        {/* Theme toggle — fixed top-right */}
+        <div style={{ position: "fixed", top: 14, right: 20, zIndex: 200 }}>
+          <ThemeToggle />
+        </div>
+        <AdminDashboard onSignOut={handleSignOut} />
+      </>
+    );
   }
 
   const userName = user.user_metadata?.name || "Student";

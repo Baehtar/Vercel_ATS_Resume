@@ -72,7 +72,7 @@ export default function BatchesEditor() {
 
   return (
     <div>
-      <h3 style={{ margin: "0 0 4px" }}>🎓 Sign-up Batches Editor</h3>
+      <h3 style={{ margin: "0 0 4px" }}>Sign-up Batches Editor</h3>
       <p className="caption" style={{ margin: "0 0 16px" }}>
         Manage the batch list students choose from when registering. Order here is the order shown in the dropdown.
       </p>
@@ -117,7 +117,7 @@ export default function BatchesEditor() {
           </div>
 
           <button className="btn-cta full" onClick={save} disabled={saving} style={{ marginTop: 8 }}>
-            {saving && <span className="spinner" />}💾 Save Batches
+            {saving && <span className="spinner" />}Save Batches
           </button>
         </>
       )}

@@ -129,7 +129,7 @@ export default function KeywordsEditor() {
 
   return (
     <div>
-      <h3 style={{ margin: "0 0 4px" }}>⚙️ Dropdown Options Editor</h3>
+      <h3 style={{ margin: "0 0 4px" }}>Dropdown Options Editor</h3>
       <p className="caption" style={{ margin: "0 0 16px" }}>
         Edit the tools and skills that appear as suggestions in the resume builder dropdowns.
         ATS scoring keywords are not changed here.
@@ -167,7 +167,7 @@ export default function KeywordsEditor() {
             className={`tab${activeCategory === cat ? " active" : ""}`}
             onClick={() => setActiveCategory(cat)}
           >
-            {cat === "tools" ? "🔧 Tools" : "🛠 Skills"}
+            {cat === "tools" ? "Tools" : "Skills"}
             <span style={{
               marginLeft: 6, fontSize: "0.72rem",
               background: "var(--panel-2)", padding: "1px 6px", borderRadius: 4,
@@ -197,7 +197,7 @@ export default function KeywordsEditor() {
             style={{ marginTop: 8 }}
           >
             {saving && <span className="spinner" />}
-            💾 Save {activeCategory === "tools" ? "Tools" : "Skills"} for {roles.find(r => r.key === selectedRole)?.title}
+            Save {activeCategory === "tools" ? "Tools" : "Skills"} for {roles.find(r => r.key === selectedRole)?.title}
           </button>
         </>
       )}

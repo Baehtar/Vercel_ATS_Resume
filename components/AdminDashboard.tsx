@@ -150,25 +150,25 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
 
   return (
     <div className="main">
-      <h2 style={{ color: "var(--blue-600)" }}>🛡️ Admin Dashboard</h2>
+      <h2 style={{ color: "var(--blue-600)" }}>Admin Dashboard</h2>
 
       <div className="tabs">
-        <button className={`tab ${activeTab === "students" ? "active" : ""}`} onClick={() => setActiveTab("students")}>👥 Students</button>
-        <button className={`tab ${activeTab === "keywords" ? "active" : ""}`} onClick={() => setActiveTab("keywords")}>⚙️ Keyword Options</button>
-        <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>🎓 Batches</button>
-        <button className={`tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>💻 Projects</button>
+        <button className={`tab ${activeTab === "students" ? "active" : ""}`} onClick={() => setActiveTab("students")}>Students</button>
+        <button className={`tab ${activeTab === "keywords" ? "active" : ""}`} onClick={() => setActiveTab("keywords")}>Keyword Options</button>
+        <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>Batches</button>
+        <button className={`tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>Projects</button>
       </div>
 
       {activeTab === "projects" && (
-        <><ProjectsEditor /><hr /><button className="full" onClick={handleSignOut}>🚪 Sign Out</button></>
+        <><ProjectsEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
       )}
 
       {activeTab === "batches" && (
-        <><BatchesEditor /><hr /><button className="full" onClick={handleSignOut}>🚪 Sign Out</button></>
+        <><BatchesEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
       )}
 
       {activeTab === "keywords" && (
-        <><KeywordsEditor /><hr /><button className="full" onClick={handleSignOut}>🚪 Sign Out</button></>
+        <><KeywordsEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
       )}
 
       {activeTab === "students" && (
@@ -310,19 +310,19 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
             <div className="panel" style={{ marginTop: 24 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                 <h3 style={{ margin: 0 }}>
-                  📄 {selectedStudent.name || "Student"}
+                  {selectedStudent.name || "Student"}
                   {selectedStudent.course && (
                     <span className="badge-gray" style={{ marginLeft: 10, fontWeight: 400, fontSize: "0.8rem" }}>{selectedStudent.course}</span>
                   )}
                 </h3>
                 <button className="ghost" style={{ padding: "4px 10px", fontSize: "0.8rem" }} onClick={() => { setSelectedStudent(null); setEditState(null); }}>
-                  ✕ Close
+                  Close
                 </button>
               </div>
 
               <div className="sub-tabs">
-                <button className={`sub-tab ${resumePanel === "preview" ? "active" : ""}`} onClick={() => setResumePanel("preview")}>👁 Preview</button>
-                <button className={`sub-tab ${resumePanel === "edit" ? "active" : ""}`} onClick={() => setResumePanel("edit")}>✏️ Edit Resume</button>
+                <button className={`sub-tab ${resumePanel === "preview" ? "active" : ""}`} onClick={() => setResumePanel("preview")}>Preview</button>
+                <button className={`sub-tab ${resumePanel === "edit" ? "active" : ""}`} onClick={() => setResumePanel("edit")}>Edit Resume</button>
               </div>
 
               {resumePanel === "preview" && (
@@ -333,7 +333,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                       {(Object.keys(TEMPLATE_OPTIONS) as TemplateId[]).map((t) => <option key={t} value={t}>{TEMPLATE_OPTIONS[t]}</option>)}
                     </select>
                     <div style={{ margin: "12px 0" }}>
-                      <button className="primary full" onClick={() => printResume(previewHtml)}>🖨 Download Student Resume PDF</button>
+                      <button className="primary full" onClick={() => printResume(previewHtml)}>Download Student Resume PDF</button>
                     </div>
                     <ResumePreview html={previewHtml} />
                   </>
@@ -345,7 +345,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
               {resumePanel === "edit" && (
                 <div>
                   <details className="expander" open>
-                    <summary>👤 Personal Details</summary>
+                    <summary>Personal Details</summary>
                     <div className="expander-body">
                       <div className="grid-2">
                         <div>
@@ -371,14 +371,14 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                   </details>
 
                   <details className="expander">
-                    <summary>📝 Summary</summary>
+                    <summary>Summary</summary>
                     <div className="expander-body">
                       <textarea rows={5} value={editState.draft.summary} onChange={(e) => patchDraft((d) => (d.summary = e.target.value))} placeholder="Professional summary…" />
                     </div>
                   </details>
 
                   <details className="expander">
-                    <summary>💼 Experience ({editState.draft.experience.length} entries)</summary>
+                    <summary>Experience ({editState.draft.experience.length} entries)</summary>
                     <div className="expander-body">
                       {editState.draft.experience.map((exp, i) => (
                         <div key={i} style={{ marginBottom: 12 }}>
@@ -412,7 +412,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                           ))}
                           <div className="btn-row" style={{ marginTop: 6 }}>
                             <button onClick={() => patchDraft((d) => d.experience[i].bullets.push(""))}>+ Bullet</button>
-                            <button onClick={() => patchDraft((d) => d.experience.splice(i, 1))}>🗑 Remove Entry</button>
+                            <button onClick={() => patchDraft((d) => d.experience.splice(i, 1))}>Remove Entry</button>
                           </div>
                           <hr />
                         </div>
@@ -424,7 +424,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                   </details>
 
                   <details className="expander">
-                    <summary>🛠 Skills</summary>
+                    <summary>Skills</summary>
                     <div className="expander-body">
                       {editState.draft.skills.map((sg, i) => (
                         <div key={i} style={{ marginBottom: 10 }}>
@@ -438,7 +438,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                               <input value={sg.list} placeholder="Python, SQL, Spark…" onChange={(e) => patchDraft((d) => (d.skills[i].list = e.target.value))} />
                             </div>
                           </div>
-                          <button style={{ marginTop: 6 }} onClick={() => patchDraft((d) => d.skills.splice(i, 1))}>🗑 Remove Group</button>
+                          <button style={{ marginTop: 6 }} onClick={() => patchDraft((d) => d.skills.splice(i, 1))}>Remove Group</button>
                           <hr />
                         </div>
                       ))}
@@ -447,7 +447,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                   </details>
 
                   <details className="expander">
-                    <summary>👁 Live Preview (edit draft)</summary>
+                    <summary>Live Preview (edit draft)</summary>
                     <div className="expander-body">
                       <label className="field-label">Template</label>
                       <select style={{ maxWidth: 280 }} value={templateId} onChange={(e) => setTemplateId(e.target.value as TemplateId)}>
@@ -460,9 +460,9 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                   {pushMsg && <div className={`alert alert-${pushMsg.kind}`} style={{ marginTop: 12 }}>{pushMsg.text}</div>}
 
                   <div className="btn-row" style={{ marginTop: 16 }}>
-                    <button className="primary" onClick={downloadEditedPdf}>⬇ Download Edited PDF</button>
+                    <button className="primary" onClick={downloadEditedPdf}>Download Edited PDF</button>
                     <button className="primary" onClick={pushChanges} disabled={pushBusy}>
-                      {pushBusy && <span className="spinner" />}☁️ Push Changes to Student
+                      {pushBusy && <span className="spinner" />}Push Changes to Student
                     </button>
                   </div>
                 </div>
@@ -471,7 +471,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
           )}
 
           <hr />
-          <button className="full" onClick={handleSignOut}>🚪 Sign Out</button>
+          <button className="full" onClick={handleSignOut}>Sign Out</button>
         </>
       )}
     </div>

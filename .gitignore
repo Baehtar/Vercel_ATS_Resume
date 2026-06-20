@@ -22,6 +22,7 @@ Thumbs.db
 # Misc
 *.log
 *.sqlite3
+.kiro/
 
 # Node / Next.js
 node_modules/
