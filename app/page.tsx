@@ -113,7 +113,7 @@ export default function Home() {
           const dbResume = await loadResume(user.id);
           if (dbResume) {
             setResume(dbResume);
-            notify("CV loaded from Supabase ☁️");
+            notify("CV loaded from Supabase");
           }
         }
       }
@@ -193,15 +193,15 @@ export default function Home() {
         onTargetRoleChange={setTargetRole}
         onLoadSample={() => {
           setResume(getDefaultSample());
-          notify("Sample resume loaded 📂");
+          notify("Sample resume loaded");
         }}
         onClear={() => {
           setResume(getEmptySchema());
-          notify("Resume cleared 🗑");
+          notify("Resume cleared");
         }}
         onIdeal={() => {
           setResume(getIdealTemplate(targetRole));
-          notify("Ideal resume template created ✨");
+          notify("Ideal resume template created");
         }}
         onSignOut={handleSignOut}
         notify={notify}
@@ -209,7 +209,7 @@ export default function Home() {
 
       <main className="main">
         <div style={{ color: "var(--blue-600)", fontSize: "1.1rem", marginBottom: 4 }}>
-          👋 Hello {userName}
+          Hello {userName}
         </div>
 
         <div className="tabs">
@@ -217,19 +217,19 @@ export default function Home() {
             className={`tab ${activeTab === "cv" ? "active" : ""}`}
             onClick={() => setActiveTab("cv")}
           >
-            📝 My CV
+            My CV
           </button>
           <button
             className={`tab ${activeTab === "jobs" ? "active" : ""}`}
             onClick={() => setActiveTab("jobs")}
           >
-            🔍 Job Openings
+            Job Openings
           </button>
           <button
             className={`tab ${activeTab === "prep" ? "active" : ""}`}
             onClick={() => setActiveTab("prep")}
           >
-            🎓 Interview Prep
+            Interview Prep
           </button>
         </div>
 

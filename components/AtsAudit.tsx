@@ -14,7 +14,7 @@ export default function AtsAudit({ report }: { report: AtsReport }) {
           <div className="metric-value">{score} / 100</div>
           {score >= 75 ? (
             <div className="alert alert-success" style={{ margin: "8px 0 0" }}>
-              Strong Match! 🎉
+              Strong Match!
             </div>
           ) : score >= 50 ? (
             <div className="alert alert-warning" style={{ margin: "8px 0 0" }}>
@@ -60,7 +60,7 @@ export default function AtsAudit({ report }: { report: AtsReport }) {
 
       <hr />
 
-      <h4>🔴 Must-Have Keywords</h4>
+      <h4>Must-Have Keywords</h4>
       <div>
         {report.must_have_matched.map((kw) => (
           <span key={kw} className="kw-must-matched">
@@ -82,10 +82,10 @@ export default function AtsAudit({ report }: { report: AtsReport }) {
           </div>
         </>
       ) : report.must_have_matched.length ? (
-        <small style={{ color: "var(--green-500)" }}>✅ All must-have keywords present!</small>
+        <small style={{ color: "var(--green-500)" }}>All must-have keywords present!</small>
       ) : null}
 
-      <h4 style={{ marginTop: 16 }}>🔵 Good-to-Have Keywords</h4>
+      <h4 style={{ marginTop: 16 }}>Good-to-Have Keywords</h4>
       <div>
         {report.good_to_have_matched.map((kw) => (
           <span key={kw} className="kw-good-matched">
@@ -110,7 +110,7 @@ export default function AtsAudit({ report }: { report: AtsReport }) {
 
       <hr />
 
-      <h4>💡 Suggested Action Verbs</h4>
+      <h4>Suggested Action Verbs</h4>
       {report.verb_suggestions.length > 0 ? (
         <div>
           {report.verb_suggestions.map((v) => (
@@ -125,20 +125,20 @@ export default function AtsAudit({ report }: { report: AtsReport }) {
 
       <hr />
 
-      <h4>📋 Formatting & Structure Audit</h4>
+      <h4>Formatting & Structure Audit</h4>
       {report.formatting_warnings.length === 0 ? (
-        <small style={{ color: "var(--green-500)" }}>✅ No formatting issues found!</small>
+        <small style={{ color: "var(--green-500)" }}>No formatting issues found!</small>
       ) : (
         report.formatting_warnings.map((w, i) => (
           <div key={i} className={`warn-box ${w.type === "error" ? "warn-error" : "warn-warning"}`}>
-            <strong>{w.type === "error" ? "✖" : "⚠"}</strong> {w.message}
+            <strong>{w.type === "error" ? "X" : "!"}</strong> {w.message}
           </div>
         ))
       )}
 
       {report.experience_gaps && report.experience_gaps.length > 0 && (
         <>
-          <h4 style={{ marginTop: 16 }}>🗓 Employment Gap Timeline</h4>
+          <h4 style={{ marginTop: 16 }}>Employment Gap Timeline</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {report.experience_gaps.map((gap, i) => (
               <div
@@ -153,7 +153,14 @@ export default function AtsAudit({ report }: { report: AtsReport }) {
                   padding: "10px 14px",
                 }}
               >
-                <span style={{ fontSize: "1.3rem" }}>{gap.months > 6 ? "🔴" : "🟡"}</span>
+                <span style={{
+                  fontSize: "1.3rem",
+                  color: gap.months > 6 ? "#f87171" : "var(--yellow-400)",
+                  fontWeight: "bold",
+                  lineHeight: 1
+                }}>
+                  !
+                </span>
                 <div style={{ flex: 1 }}>
                   <strong style={{ fontSize: "0.9rem" }}>
                     {gap.from} → {gap.to}

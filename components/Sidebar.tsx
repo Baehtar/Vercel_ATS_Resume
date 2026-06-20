@@ -74,7 +74,7 @@ export default function Sidebar({
       <p className="caption">Your launchpad to data science careers</p>
       <hr />
 
-      <h4>🎯 Target Role</h4>
+      <h4>Target Role</h4>
       <label className="field-label">I am applying for:</label>
       <select value={targetRole} onChange={(e) => onTargetRoleChange(e.target.value)}>
         {Object.keys(roleOptions).map((k) => (
@@ -85,7 +85,7 @@ export default function Sidebar({
       </select>
 
       <hr />
-      <h4>📂 Resume Data</h4>
+      <h4>Resume Data</h4>
       <div className="btn-row">
         <button onClick={onLoadSample}>Load Sample</button>
         <button className="primary" onClick={onClear}>
@@ -93,17 +93,17 @@ export default function Sidebar({
         </button>
       </div>
       <button className="full" style={{ marginTop: 8 }} onClick={onIdeal}>
-        ✨ Create Ideal Resume Template
+        Create Ideal Resume Template
       </button>
 
       <hr />
-      <h4>☁️ Cloud Storage</h4>
+      <h4>Cloud Storage</h4>
       {isDemo ? (
         <div className="alert alert-warning">Running in Demo Mode. Cloud saving is disabled.</div>
       ) : (
         <>
           <button className="primary full" onClick={doSave} disabled={saving}>
-            {saving && <span className="spinner" />}💾 Save Resume to Cloud
+            {saving && <span className="spinner" />}Save Resume to Cloud
           </button>
           {saveMsg && (
             <div className={`alert ${saveMsg.ok ? "alert-success" : "alert-error"}`}>
@@ -114,7 +114,7 @@ export default function Sidebar({
       )}
 
       <hr />
-      <h4>👤 Student Profile</h4>
+      <h4>Student Profile</h4>
       <p style={{ margin: "4px 0" }}>
         <strong>Name:</strong> {user.user_metadata?.name || "Student"}
       </p>
@@ -130,7 +130,7 @@ export default function Sidebar({
 
       <hr />
       <button className="full" onClick={onSignOut}>
-        🚪 Sign Out
+        Sign Out
       </button>
     </aside>
   );

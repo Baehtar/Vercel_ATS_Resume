@@ -207,7 +207,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
   return (
     <div>
       {/* Top score banner */}
-      <h3>🎯 ATS Optimization Score</h3>
+      <h3>ATS Optimization Score</h3>
       <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
         <div className="metric">
           <div className="metric-label">Current score</div>
@@ -235,7 +235,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
 
           {/* Personal */}
           <details className="expander" open>
-            <summary>👤 Personal Details</summary>
+            <summary>Personal Details</summary>
             <div className="expander-body">
               <label className="field-label">Full Name</label>
               <input
@@ -295,9 +295,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
 
           {/* Experience */}
           <details className="expander">
-            <summary>💼 Work / Internship Experience</summary>
+            <summary>Work / Internship Experience</summary>
             <div className="expander-body">
-              <h4>✨ AI Experience Generator</h4>
+              <h4>AI Experience Generator</h4>
               <p className="caption">
                 Provide concise details and click Generate Experience to create ATS-friendly bullets
                 for one experience entry.
@@ -473,7 +473,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                         className="icon-btn"
                         onClick={() => patch((d) => d.experience[i].bullets.splice(bi, 1))}
                       >
-                        ✖
+                        X
                       </button>
                     </div>
                   ))}
@@ -482,7 +482,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                       + Bullet
                     </button>
                     <button onClick={() => patch((d) => d.experience.splice(i, 1))}>
-                      🗑 Delete Entry
+                      Delete Entry
                     </button>
                   </div>
                   <hr />
@@ -511,7 +511,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
 
           {/* Education */}
           <details className="expander">
-            <summary>🎓 Education</summary>
+            <summary>Education</summary>
             <div className="expander-body">
               {resume.education.map((edu, i) => {
                 const parts = String(edu.date || "").split(" to ");
@@ -589,7 +589,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                       style={{ marginTop: 8 }}
                       onClick={() => patch((d) => d.education.splice(i, 1))}
                     >
-                      🗑 Delete
+                      Delete
                     </button>
                     <hr />
                   </div>
@@ -616,9 +616,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
 
           {/* Projects */}
           <details className="expander">
-            <summary>💻 Projects</summary>
+            <summary>Projects</summary>
             <div className="expander-body">
-              <label className="field-label">➕ Add from preset</label>
+              <label className="field-label">Add from preset</label>
               <select value={presetSelect} onChange={(e) => setPresetSelect(e.target.value)}>
                 <option value="">— select a preset project —</option>
                 {getProjectNames().map((name) => (
@@ -674,7 +674,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                     style={{ marginTop: 8 }}
                     onClick={() => patch((d) => d.projects.splice(i, 1))}
                   >
-                    🗑 Delete
+                    Delete
                   </button>
                   <hr />
                 </div>
@@ -694,7 +694,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
 
           {/* Skills */}
           <details className="expander">
-            <summary>🛠 Skills</summary>
+            <summary>Skills</summary>
             <div className="expander-body">
               {resume.skills.map((s, i) => (
                 <div key={i}>
@@ -717,7 +717,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                     style={{ marginTop: 8 }}
                     onClick={() => patch((d) => d.skills.splice(i, 1))}
                   >
-                    🗑 Delete
+                    Delete
                   </button>
                   <hr />
                 </div>
@@ -733,9 +733,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
 
           {/* Certifications */}
           <details className="expander">
-            <summary>📜 Certifications</summary>
+            <summary>Certifications</summary>
             <div className="expander-body">
-              <label className="field-label">➕ Add from preset</label>
+              <label className="field-label">Add from preset</label>
               <select value={certPreset} onChange={(e) => setCertPreset(e.target.value)}>
                 <option value="">— select a certification —</option>
                 <option value="Data Science With Big Data Engineering + GenAI">Data Science With Big Data Engineering + GenAI</option>
@@ -781,7 +781,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                     style={{ marginTop: 8 }}
                     onClick={() => patch((d) => d.certifications.splice(i, 1))}
                   >
-                    🗑 Delete
+                    Delete
                   </button>
                   <hr />
                 </div>
@@ -799,7 +799,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
 
           {/* Professional Summary — generated last so it reflects the full resume */}
           <details className="expander" open>
-            <summary>✍ Professional Summary</summary>
+            <summary>Professional Summary</summary>
             <div className="expander-body">
               <p className="caption" style={{ marginTop: 0 }}>
                 Generate this last — it&apos;s written from everything you&apos;ve added above
@@ -820,7 +820,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
 
           <hr />
           <button className="btn-cta full" onClick={() => printResume(previewHtml)}>
-            ⬇ Download Resume PDF
+            Download Resume PDF
           </button>
         </div>
 
@@ -831,13 +831,13 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
               className={`tab ${rightTab === "preview" ? "active" : ""}`}
               onClick={() => setRightTab("preview")}
             >
-              📄 Preview & Download
+              Preview & Download
             </button>
             <button
               className={`tab ${rightTab === "audit" ? "active" : ""}`}
               onClick={() => setRightTab("audit")}
             >
-              🎯 ATS Keyword Audit
+              ATS Keyword Audit
             </button>
           </div>
 
@@ -856,7 +856,7 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
               </select>
               <div style={{ margin: "12px 0" }}>
                 <button className="primary full" onClick={() => printResume(previewHtml)}>
-                  🖨 Download ATS-Optimized PDF ({fileName})
+                  Download ATS-Optimized PDF ({fileName})
                 </button>
               </div>
               <ResumePreview html={previewHtml} />

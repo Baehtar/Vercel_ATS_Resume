@@ -9,10 +9,6 @@ env/
 venv/
 .venv/
 
-# Streamlit
-.streamlit/secrets.toml
-streamlit_app.log
-
 # OS / IDE files
 .vscode/
 .idea/

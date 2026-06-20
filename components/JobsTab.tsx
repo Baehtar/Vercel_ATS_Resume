@@ -28,11 +28,11 @@ function JobCard({ job }: { job: Job }) {
         <div>
           <h3 style={{ margin: "0 0 4px 0" }}>{job.title}</h3>
           <p style={{ margin: 0, color: "var(--text-muted)" }}>
-            🏢 {job.company}&nbsp;|&nbsp;📍 {job.location}&nbsp;|&nbsp;💰 {job.salary_range}
+            Company: {job.company}&nbsp;|&nbsp;Location: {job.location}&nbsp;|&nbsp;Salary: {job.salary_range}
           </p>
         </div>
         <div style={{ textAlign: "right" }}>
-          <small className="muted">📅 {job.posted}</small><br />
+          <small className="muted">Posted: {job.posted}</small><br />
           <small className="muted">{job.experience}</small>
         </div>
       </div>
@@ -47,7 +47,7 @@ function JobCard({ job }: { job: Job }) {
           onClick={() => setOpen((v) => !v)}
           style={{ padding: "6px 14px", fontSize: "0.85rem" }}
         >
-          {open ? "🙈 Hide Description" : `📖 View — ${job.title} at ${job.company}`}
+          {open ? "Hide Description" : `View — ${job.title} at ${job.company}`}
         </button>
 
         {open && (
@@ -58,7 +58,7 @@ function JobCard({ job }: { job: Job }) {
             <hr />
             <p><strong>Experience:</strong> {job.experience}</p>
             <a href={job.apply_url} target="_blank" rel="noreferrer">
-              <button className="primary full">🔗 Apply</button>
+              <button className="primary full">Apply</button>
             </a>
           </div>
         )}
@@ -149,7 +149,7 @@ export default function JobsTab() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
         <div>
-          <h2 style={{ margin: 0 }}>🔍 Job Openings</h2>
+          <h2 style={{ margin: 0 }}>Job Openings</h2>
           <p className="caption">
             {usingMock
               ? "Showing sample listings — live listings load after first daily refresh."
@@ -160,7 +160,7 @@ export default function JobsTab() {
 
       {error && (
         <div className="alert alert-warning" style={{ marginTop: 8 }}>
-          ⚠ {error}
+          Warning: {error}
         </div>
       )}
 

@@ -26,7 +26,7 @@ function QuestionItem({ q, qi }: { q: PrepQuestion; qi: number }) {
               onChange={(e) => setShowHint(e.target.checked)}
               style={{ width: "auto", marginRight: 6 }}
             />
-            💡 Show Hint
+            Show Hint
           </label>
         </div>
         {showHint && (
@@ -35,7 +35,7 @@ function QuestionItem({ q, qi }: { q: PrepQuestion; qi: number }) {
           </div>
         )}
 
-        <label className="field-label">✍ Write your answer here:</label>
+        <label className="field-label">Write your answer here:</label>
         <textarea
           rows={5}
           value={answer}
@@ -51,7 +51,7 @@ function QuestionItem({ q, qi }: { q: PrepQuestion; qi: number }) {
               onChange={(e) => setShowAnswer(e.target.checked)}
               style={{ width: "auto", marginRight: 6 }}
             />
-            📝 Show Sample Answer
+            Show Sample Answer
           </label>
         </div>
         {showAnswer && (
@@ -73,7 +73,7 @@ export default function PrepTab() {
 
   return (
     <div>
-      <h2>🎓 Interview Preparation</h2>
+      <h2>Interview Preparation</h2>
       <p className="caption">Practice role-specific technical and behavioral questions</p>
 
       <label className="field-label">Select Role to Practice</label>
@@ -87,7 +87,7 @@ export default function PrepTab() {
 
       {Object.entries(roleData.categories).map(([categoryName, questions]) => (
         <div key={categoryName}>
-          <h3 style={{ marginTop: 20 }}>📂 {categoryName}</h3>
+          <h3 style={{ marginTop: 20 }}>{categoryName}</h3>
           {questions.map((q, qi) => (
             <QuestionItem key={qi} q={q} qi={qi} />
           ))}
