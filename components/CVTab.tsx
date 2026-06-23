@@ -13,6 +13,7 @@ import { useKeywordOptions } from "@/lib/useKeywordOptions";
 import KeywordInput from "./KeywordInput";
 import AtsAudit from "./AtsAudit";
 import ResumePreview, { printResume } from "./ResumePreview";
+import JdKeywordPanel from "./JdKeywordPanel";
 
 interface Props {
   resume: Resume;
@@ -232,6 +233,9 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
         {/* LEFT: editor */}
         <div>
           <h3>Resume Editor — {roleTitle}</h3>
+
+          {/* JD Keyword Matcher */}
+          <JdKeywordPanel resume={resume} notify={notify} />
 
           {/* Personal */}
           <details className="expander" open>
