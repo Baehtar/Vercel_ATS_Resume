@@ -259,6 +259,109 @@ export async function generateProfessionalSummary(input: SummaryInput) {
   return { summary: fb.summary, api_used: false, api_error: apiError };
 }
 
+// ─── Interview Story ──────────────────────────────────────────────────────────
+
+export const STORY_PROMPT = `You are a senior technical interview coach who has helped hundreds of candidates land Data Engineering and Data Analyst roles at top companies.
+
+Your task is to take the candidate's resume content below and craft an authentic, compelling INTERVIEW STORY they can tell when asked questions like "Tell me about yourself," "Walk me through this project," or "Tell me about a challenge you faced."
+
+### Rules
+1. Do NOT just restate the resume bullets. Build a narrative with a clear beginning, challenge, action, and outcome (STAR-style, but conversational, not robotic).
+2. Make it sound like something a real person would say out loud in an interview, not a written document.
+3. Highlight a specific moment of ownership, problem-solving, or initiative that makes the candidate memorable.
+4. Include one believable technical or business obstacle they overcame and how they overcame it.
+5. Keep it grounded in the candidate's actual experience. Do not invent achievements that contradict the resume.
+6. End with a brief reflection on what they learned or how it shaped their approach to data engineering work.
+7. Write in first person, as if the candidate is speaking.
+8. Keep it to 150-220 words — long enough to be substantial, short enough to say in under 90 seconds.
+9. Avoid generic phrases like "I'm passionate about data" or "I love solving problems." Make it specific and concrete.
+10. If multiple experience entries exist, choose the most compelling/relevant one to build the story around, but you may briefly reference others for context.
+
+Return ONLY valid JSON with this structure:
+{"story_title": "A short 4-6 word title for this story (e.g. 'The Pipeline That Almost Failed')","story": "The full first-person interview story (150-220 words)","key_talking_points": ["point 1", "point 2", "point 3"],"follow_up_tip": "One sentence tip on how to handle a likely follow-up question about this story"}`;
+
+export interface StoryInput {
+  full_name: string;
+  target_role: string;
+  headline: string;
+  summary: string;
+  experience_text: string;
+  projects_text: string;
+  skills_text: string;
+}
+
+export interface StoryOutput {
+  story_title: string;
+  story: string;
+  key_talking_points: string[];
+  follow_up_tip: string;
+  api_used: boolean;
+  api_error: string | null;
+}
+
+function fallbackStory(input: StoryInput): StoryOutput {
+  const role = input.target_role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const name = input.full_name || "I";
+
+  const story =
+    `${name} started in ${role} work and quickly found myself responsible for a core data pipeline ` +
+    `that the business relied on daily. Early on, the pipeline kept failing silently — data was landing ` +
+    `in the warehouse but counts were off. I dug into the logs, traced it back to a schema drift issue ` +
+    `upstream, and built a validation layer that caught mismatches before they propagated downstream. ` +
+    `After that, I automated the alerting so the team got notified within minutes of any anomaly. ` +
+    `It taught me that reliability is not an afterthought — it has to be built into the pipeline from ` +
+    `day one. That experience shaped how I approach every data project now: I always ask "what breaks ` +
+    `silently?" before I ask "what features can we add?"`;
+
+  return {
+    story_title: "The Pipeline That Taught Me Reliability",
+    story,
+    key_talking_points: [
+      "Silent failure in a production pipeline",
+      "Root-cause analysis and schema drift fix",
+      "Built automated validation and alerting",
+    ],
+    follow_up_tip:
+      "If asked for metrics, say you reduced data quality incidents by roughly 80% — frame it as an estimate if you don't have the exact number.",
+    api_used: false,
+    api_error: "OpenAI unavailable — showing illustrative story. Generate again once API key is set.",
+  };
+}
+
+export async function generateInterviewStory(input: StoryInput): Promise<StoryOutput> {
+  const promptText =
+    `### Candidate Resume Data\n` +
+    `Name: ${input.full_name}\n` +
+    `Target Role: ${input.target_role}\n` +
+    `Headline: ${input.headline}\n` +
+    `Professional Summary:\n${input.summary}\n\n` +
+    `Experience:\n${input.experience_text}\n\n` +
+    `Projects:\n${input.projects_text}\n\n` +
+    `Skills:\n${input.skills_text}\n`;
+
+  let apiError: string | null = null;
+  try {
+    const raw = await callOpenAI(promptText, STORY_PROMPT);
+    const data = parseOpenAIJson(raw) as Partial<StoryOutput>;
+    if (data.story && data.story_title) {
+      return {
+        story_title: (data.story_title as string) || "",
+        story: (data.story as string) || "",
+        key_talking_points: (data.key_talking_points as string[]) || [],
+        follow_up_tip: (data.follow_up_tip as string) || "",
+        api_used: true,
+        api_error: null,
+      };
+    }
+    throw new Error("Incomplete JSON from OpenAI");
+  } catch (e) {
+    apiError = e instanceof Error ? e.message : String(e);
+  }
+
+  const fb = fallbackStory(input);
+  return { ...fb, api_error: apiError };
+}
+
 export interface ExperienceInput {
   current_role?: string;
   domain?: string;

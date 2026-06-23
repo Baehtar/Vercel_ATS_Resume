@@ -3,6 +3,8 @@
 
 import { useState } from "react";
 import { INTERVIEW_QUESTIONS, type PrepQuestion } from "@/lib/prepDb";
+import type { Resume } from "@/lib/types";
+import InterviewStoryCard from "./InterviewStoryCard";
 
 function QuestionItem({ q, qi }: { q: PrepQuestion; qi: number }) {
   const [showHint, setShowHint] = useState(false);
@@ -67,7 +69,7 @@ function QuestionItem({ q, qi }: { q: PrepQuestion; qi: number }) {
   );
 }
 
-export default function PrepTab() {
+export default function PrepTab({ resume, targetRole }: { resume: Resume; targetRole: string }) {
   const [role, setRole] = useState<string>(Object.keys(INTERVIEW_QUESTIONS)[0]);
   const roleData = INTERVIEW_QUESTIONS[role];
 
@@ -76,6 +78,13 @@ export default function PrepTab() {
       <h2>Interview Preparation</h2>
       <p className="caption">Practice role-specific technical and behavioral questions</p>
 
+      {/* ── Personalised story section ─────────────────────────────────── */}
+      <InterviewStoryCard resume={resume} targetRole={targetRole} />
+
+      <hr />
+
+      {/* ── Question banks ─────────────────────────────────────────────── */}
+      <h3 style={{ marginTop: 0 }}>Practice Questions</h3>
       <label className="field-label">Select Role to Practice</label>
       <select style={{ maxWidth: 320 }} value={role} onChange={(e) => setRole(e.target.value)}>
         {Object.keys(INTERVIEW_QUESTIONS).map((k) => (

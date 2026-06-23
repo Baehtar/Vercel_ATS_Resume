@@ -242,7 +242,7 @@ export default function Home() {
           />
         )}
         {activeTab === "jobs" && <JobsTab />}
-        {activeTab === "prep" && <PrepTab />}
+        {activeTab === "prep" && <PrepTab resume={resume} targetRole={targetRole} />}
       </main>
 
       {toast && <div className="toast">{toast}</div>}
