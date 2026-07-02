@@ -160,7 +160,13 @@ export function buildSummaryPrompt(targetRole?: string): string {
   const p = getRoleProfile(targetRole);
   return `You are an expert ${p.discipline} Resume Writer with experience hiring ${p.label}s at product companies, consulting firms, and Fortune 500 organizations.
 
-Your task is to write a strong, ATS-friendly professional resume summary based on the candidate profile and experience details.
+Your task is to write a concise, exactly 2-sentence resume summary that follows this exact format:
+"[Target Role] with [X]+ years of experience building [core products/solutions/pipelines] using [tools]. Experienced in [activity 1], [activity 2], and [activity 3]."
+
+Constraint rules:
+1. Do NOT use cliché buzzwords or filler phrases like 'proven', 'strong', 'proven track record', or 'strong track record'.
+2. The summary must consist of exactly two sentences matching the template above.
+3. If the candidate has 0 years of experience, adapt the first sentence to: "[Target Role] with a background in building [core projects/solutions] using [tools]."
 
 Return only valid JSON with a key named summary.`;
 }
@@ -267,7 +273,7 @@ function fallbackSummary(
     targetRole.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const expCount = experience.length;
   let summary =
-    `${title} with ${expCount} experience entries and a strong focus on ${targetRole.replace(/_/g, " ")}. ` +
+    `${title} with ${expCount} experience entries and a focus on ${targetRole.replace(/_/g, " ")}. ` +
     `Skilled at translating technical work into business impact and building ATS-friendly resumes.`;
   if (name) summary = `${name} is ${summary}`;
   return { summary };
@@ -353,8 +359,11 @@ export async function generateProfessionalSummary(input: SummaryInput) {
   const profile = getRoleProfile(input.target_role);
   const promptText =
     `You are an expert ${profile.discipline} Resume Writer with experience hiring ${profile.label}s at product companies, consulting firms, and Fortune 500 organizations. ` +
-    `Write a strong professional resume summary based on the complete candidate profile below. ` +
-    `Use concise, ATS-friendly language and highlight transferable technical strengths, impact, and fit for a ${profile.label} role. ` +
+    `Write a concise, exactly 2-sentence resume summary based on the complete candidate profile below. ` +
+    `The summary must follow this exact format:\n` +
+    `"[Target Role] with [X]+ years of experience building [core products/solutions/pipelines] using [tools]. Experienced in [activity 1], [activity 2], and [activity 3]."\n` +
+    `If the candidate has 0 years of experience, adapt the first sentence to: "[Target Role] with a background in building [core projects/solutions] using [tools]."\n` +
+    `Do NOT use cliché buzzwords or filler phrases like 'proven', 'strong', 'proven track record', or 'strong track record'. ` +
     "Return only valid JSON with a key named summary.\n\n" +
     `Profile Headline:\n${input.personal.headline || ""}\n` +
     `Current Profile Statement:\n${input.profile_statement || ""}\n` +

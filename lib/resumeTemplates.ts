@@ -480,7 +480,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
     summaryInner = `<p class="summary-text">${_safe(summary)}</p>`;
     summaryHtml = `
             <div class="resume-section">
-                <h2 class="section-title">PROFESSIONAL SUMMARY</h2>
+                <h2 class="section-title">SUMMARY</h2>
                 <p class="summary-text">${_safe(summary)}</p>
             </div>`;
   }
