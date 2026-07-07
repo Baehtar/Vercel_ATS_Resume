@@ -1,9 +1,9 @@
 // components/JdKeywordPanel.tsx
-// Paste a job description → extracts tech keywords → shows what's in your
+// Paste a job description, extract tech keywords, and show what's in your
 // resume vs what's missing, with one-click copy for each missing keyword.
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { parseJd } from "@/lib/jdParser";
 import type { Resume } from "@/lib/types";
 
@@ -36,7 +36,7 @@ export default function JdKeywordPanel({ resume, notify }: Props) {
       // fallback for older browsers / non-HTTPS
     }
     setCopied(kw);
-    notify(`Copied "${kw}" — paste it into your Skills or Summary.`);
+    notify(`Copied "${kw}". Paste it into your Skills or Summary.`);
     setTimeout(() => setCopied(null), 1800);
   };
 
@@ -54,27 +54,23 @@ export default function JdKeywordPanel({ resume, notify }: Props) {
 
   return (
     <details className="expander">
-      <summary>🎯 Job Description Keyword Matcher</summary>
+      <summary>Job Description Keyword Matcher</summary>
       <div className="expander-body">
         <p className="caption" style={{ marginTop: 0 }}>
           Paste a job description below. Keywords found in the JD will be
-          compared against your resume — so you know exactly what to add to
+          compared against your resume, so you know exactly what to add to
           maximise your match for <em>this specific role</em>.
         </p>
 
         <textarea
           rows={6}
           value={jdText}
-          placeholder="Paste the full job description here…"
+          placeholder="Paste the full job description here..."
           onChange={(e) => setJdText(e.target.value)}
         />
 
         <div className="btn-row" style={{ marginTop: 10 }}>
-          <button
-            className="btn-cta"
-            onClick={handleAnalyse}
-            disabled={!jdText.trim()}
-          >
+          <button className="btn-cta" onClick={handleAnalyse} disabled={!jdText.trim()}>
             Analyse JD
           </button>
           {submitted && (
@@ -84,7 +80,7 @@ export default function JdKeywordPanel({ resume, notify }: Props) {
           )}
         </div>
 
-        {/* ── Results ───────────────────────────────────────────────────── */}
+        {/* Results */}
         {display && display.allKeywords.length === 0 && (
           <div className="alert alert-warning" style={{ marginTop: 14 }}>
             No recognised tech keywords found. Try pasting a more detailed job
@@ -150,21 +146,21 @@ export default function JdKeywordPanel({ resume, notify }: Props) {
             </div>
 
             <p className="caption" style={{ margin: "0 0 6px" }}>
-              {display.allKeywords.length} keywords found in JD ·{" "}
+              {display.allKeywords.length} keywords found in JD{" | "}
               <span style={{ color: "var(--green-500)", fontWeight: 600 }}>
                 {display.matched.length} in your resume
               </span>{" "}
-              ·{" "}
+              {" | "}
               <span style={{ color: "#ef4444", fontWeight: 600 }}>
                 {display.missing.length} missing
               </span>
             </p>
 
-            {/* Missing keywords — primary action */}
+            {/* Missing keywords - primary action */}
             {display.missing.length > 0 && (
               <>
                 <h4 style={{ marginTop: 14, marginBottom: 6, color: "#f87171" }}>
-                  Missing from your resume — add these
+                  Missing from your resume - add these
                 </h4>
                 <p className="caption" style={{ marginTop: 0, marginBottom: 8 }}>
                   Click a keyword to copy it, then paste it into your Skills,
@@ -195,7 +191,7 @@ export default function JdKeywordPanel({ resume, notify }: Props) {
                         boxShadow: "none",
                       }}
                     >
-                      {copied === kw ? "✓ Copied!" : `+ ${kw}`}
+                      {copied === kw ? "Copied!" : `+ ${kw}`}
                     </button>
                   ))}
                 </div>
@@ -206,12 +202,12 @@ export default function JdKeywordPanel({ resume, notify }: Props) {
             {display.matched.length > 0 && (
               <>
                 <h4 style={{ marginTop: 18, marginBottom: 6, color: "var(--green-500)" }}>
-                  Already in your resume ✓
+                  Already in your resume
                 </h4>
                 <div className="chip-select">
                   {display.matched.map((kw) => (
                     <span key={kw} className="kw-must-matched">
-                      ✓ {kw}
+                      {kw}
                     </span>
                   ))}
                 </div>

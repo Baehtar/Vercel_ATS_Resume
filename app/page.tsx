@@ -208,7 +208,7 @@ export default function Home() {
       />
 
       <main className="main">
-        <div style={{ color: "var(--blue-600)", fontSize: "1.1rem", marginBottom: 4 }}>
+        <div style={{ color: "var(--premium-white)", fontSize: "1.1rem", marginBottom: 4 }}>
           Hello {userName}
         </div>
 

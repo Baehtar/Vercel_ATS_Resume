@@ -23,6 +23,7 @@
   --gray-900: #101828;
   --black:    #000;
   --white:    #fff;
+  --premium-white: #f8fafc;
 }
 
 /* â”€â”€ Dark mode (default) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -617,7 +618,7 @@ details.expander[open] > summary {
 .kw-good-matched {
   display: inline-block;
   background: rgba(21, 93, 252, 0.12);
-  color: var(--blue-600);
+  color: var(--premium-white);
   padding: 4px 12px;
   margin: 3px;
   border-radius: 20px;
@@ -754,7 +755,6 @@ details.expander[open] > summary {
   border-radius: 14px;
   padding: 16px 20px;
   display: inline-block;
-  box-shadow: 0 0 20px var(--primary-glow);
 }
 .metric .metric-label {
   font-size: 0.78rem;
@@ -765,7 +765,7 @@ details.expander[open] > summary {
 .metric .metric-value {
   font-size: 2rem;
   font-weight: 800;
-  color: var(--blue-600);
+  color: var(--premium-white);
 }
 
 /* Table */

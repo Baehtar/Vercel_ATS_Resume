@@ -127,7 +127,7 @@ export default function ProjectsEditor() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{proj.name}</div>
                 <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: 2 }}>{proj.tech}</div>
-                {proj.link && <div style={{ fontSize: "0.75rem", color: "var(--blue-600)", marginTop: 2 }}>{proj.link}</div>}
+                {proj.link && <div style={{ fontSize: "0.75rem", color: "var(--premium-white)", marginTop: 2 }}>{proj.link}</div>}
               </div>
               <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                 <button className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0 || saving} title="Move up">↑</button>

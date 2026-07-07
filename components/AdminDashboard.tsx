@@ -150,7 +150,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
 
   return (
     <div className="main">
-      <h2 style={{ color: "var(--blue-600)" }}>Admin Dashboard</h2>
+      <h2 style={{ color: "var(--premium-white)" }}>Admin Dashboard</h2>
 
       <div className="tabs">
         <button className={`tab ${activeTab === "students" ? "active" : ""}`} onClick={() => setActiveTab("students")}>Students</button>
@@ -260,7 +260,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                                 gap: 4,
                                 fontSize: "0.82rem",
                                 fontWeight: 600,
-                                color: "var(--blue-600)",
+                                color: "var(--premium-white)",
                                 cursor: "pointer",
                               }}>
                                 {s.experience_count} entr{s.experience_count === 1 ? "y" : "ies"} ▾

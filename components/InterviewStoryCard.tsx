@@ -121,7 +121,7 @@ export default function InterviewStoryCard({ resume, targetRole }: Props) {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div>
-          <h3 style={{ margin: 0, color: "var(--blue-600)" }}>
+          <h3 style={{ margin: 0, color: "var(--premium-white)" }}>
             Your Interview Story
           </h3>
           <p className="caption" style={{ margin: "4px 0 0" }}>
@@ -170,7 +170,7 @@ export default function InterviewStoryCard({ resume, targetRole }: Props) {
               style={{
                 display: "inline-block",
                 background: "rgba(21,93,252,0.12)",
-                color: "var(--blue-600)",
+                color: "var(--premium-white)",
                 border: "1px solid rgba(21,93,252,0.25)",
                 borderRadius: 20,
                 padding: "3px 14px",
@@ -189,7 +189,7 @@ export default function InterviewStoryCard({ resume, targetRole }: Props) {
               background: "var(--panel-2)",
               borderRadius: 10,
               padding: "18px 20px",
-              borderLeft: "4px solid var(--blue-600)",
+              borderLeft: "4px solid var(--premium-white)",
               lineHeight: 1.7,
               fontSize: "0.95rem",
               whiteSpace: "pre-wrap",
