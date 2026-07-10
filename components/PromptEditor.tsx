@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { getAccessToken } from "@/lib/supabaseClient";
 import { DEFAULT_PROMPT_TEMPLATES, PROMPT_LABELS, type PromptKey } from "@/lib/promptTemplates";
 
-const keys = Object.keys(PROMPT_LABELS) as PromptKey[];
+const editablePromptKeys: PromptKey[] = ["experience", "summary", "story"];
 
 export default function PromptEditor() {
-  const [selected, setSelected] = useState<PromptKey>(keys[0]);
+  const [selected, setSelected] = useState<PromptKey>(editablePromptKeys[0]);
   const [prompts, setPrompts] = useState<Record<PromptKey, string>>(DEFAULT_PROMPT_TEMPLATES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,10 +47,18 @@ export default function PromptEditor() {
       {msg && <div className={`alert alert-${msg.kind}`} style={{ marginBottom: 12 }}>{msg.text}</div>}
       {loading ? <p className="muted"><span className="spinner" />Loading prompts...</p> : (
         <>
-          <label className="field-label">Prompt</label>
-          <select value={selected} onChange={(e) => setSelected(e.target.value as PromptKey)} style={{ maxWidth: 360, marginBottom: 10 }}>
-            {keys.map((key) => <option key={key} value={key}>{PROMPT_LABELS[key]}</option>)}
-          </select>
+          <label className="field-label">Prompt Type</label>
+          <div className="prompt-select-wrap">
+            <select
+              className="prompt-select"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value as PromptKey)}
+              aria-label="Select prompt type"
+            >
+              {editablePromptKeys.map((key) => <option key={key} value={key}>{PROMPT_LABELS[key]}</option>)}
+            </select>
+            <span className="prompt-select-arrow" aria-hidden="true">v</span>
+          </div>
           <textarea
             rows={24}
             value={prompts[selected]}

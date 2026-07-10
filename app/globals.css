@@ -1210,3 +1210,34 @@ table.score-table td {
   font-weight: 600;
   border: 1px solid var(--border);
 }
+
+.prompt-select-wrap {
+  position: relative;
+  width: min(100%, 420px);
+  margin-bottom: 12px;
+}
+
+.prompt-select {
+  min-height: 46px;
+  padding-right: 44px !important;
+  border-color: var(--border-hover) !important;
+  background-color: var(--panel) !important;
+  color: var(--premium-white) !important;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.prompt-select:hover {
+  border-color: var(--yellow-400) !important;
+}
+
+.prompt-select-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--yellow-400);
+  font-size: 0.82rem;
+  font-weight: 900;
+  pointer-events: none;
+}
