@@ -14,8 +14,9 @@ import ResumePreview, { printResume } from "./ResumePreview";
 import KeywordsEditor from "./KeywordsEditor";
 import BatchesEditor from "./BatchesEditor";
 import ProjectsEditor from "./ProjectsEditor";
+import PromptEditor from "./PromptEditor";
 
-type AdminTab = "students" | "keywords" | "batches" | "projects";
+type AdminTab = "students" | "keywords" | "batches" | "projects" | "prompts";
 type ResumePanel = "preview" | "edit";
 
 interface EditState {
@@ -157,7 +158,12 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
         <button className={`tab ${activeTab === "keywords" ? "active" : ""}`} onClick={() => setActiveTab("keywords")}>Keyword Options</button>
         <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>Batches</button>
         <button className={`tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>Projects</button>
+        <button className={`tab ${activeTab === "prompts" ? "active" : ""}`} onClick={() => setActiveTab("prompts")}>AI Prompts</button>
       </div>
+
+      {activeTab === "prompts" && (
+        <><PromptEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
+      )}
 
       {activeTab === "projects" && (
         <><ProjectsEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>

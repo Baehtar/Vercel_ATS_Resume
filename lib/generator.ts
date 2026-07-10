@@ -2,6 +2,7 @@
 // This module is imported only by API routes and runs on the server. The OpenAI
 // key is read from server-only env vars and never exposed to the browser.
 import OpenAI from "openai";
+import { getConfiguredPrompt } from "./promptConfig";
 
 function getOpenAIKey(): string | undefined {
   return process.env.OPENAI_API_KEY;
@@ -306,7 +307,12 @@ export async function generateEntryBullets(entry: EntryInfo) {
 
   let apiError: string | null = null;
   try {
-    const raw = await callOpenAI(promptText, buildBasePrompt(entry.target_role));
+    const p = getRoleProfile(entry.target_role);
+    const systemPrompt = await getConfiguredPrompt("experience", buildBasePrompt(entry.target_role), {
+      discipline: p.discipline, label: p.label, adjective: p.adjective,
+      storyDiscipline: p.storyDiscipline, focusTech: p.focusTech,
+    });
+    const raw = await callOpenAI(promptText, systemPrompt);
     const data = parseOpenAIJson(raw);
     let bullets = (data.bullets as string[]) || [];
     bullets = bullets.filter((b) => b && typeof b === "string").map((b) => b.trim());
@@ -375,7 +381,11 @@ export async function generateProfessionalSummary(input: SummaryInput) {
 
   let apiError: string | null = null;
   try {
-    const raw = await callOpenAI(promptText, buildSummaryPrompt(input.target_role));
+    const p = getRoleProfile(input.target_role);
+    const systemPrompt = await getConfiguredPrompt("summary", buildSummaryPrompt(input.target_role), {
+      discipline: p.discipline, label: p.label,
+    });
+    const raw = await callOpenAI(promptText, systemPrompt);
     const data = parseOpenAIJson(raw);
     return {
       summary: ((data.summary as string) || "").trim(),
@@ -465,7 +475,11 @@ export async function generateInterviewStory(input: StoryInput): Promise<StoryOu
 
   let apiError: string | null = null;
   try {
-    const raw = await callOpenAI(promptText, buildStoryPrompt(input.target_role));
+    const p = getRoleProfile(input.target_role);
+    const systemPrompt = await getConfiguredPrompt("story", buildStoryPrompt(input.target_role), {
+      label: p.label, storyDiscipline: p.storyDiscipline,
+    });
+    const raw = await callOpenAI(promptText, systemPrompt);
     const data = parseOpenAIJson(raw) as Partial<StoryOutput>;
     if (data.story && data.story_title) {
       return {
@@ -513,7 +527,12 @@ export async function generateExperience(info: ExperienceInput) {
 
   let apiError: string | null = null;
   try {
-    const raw = await callOpenAI(promptText, buildBasePrompt(info.target_role));
+    const p = getRoleProfile(info.target_role);
+    const systemPrompt = await getConfiguredPrompt("experience_package", buildBasePrompt(info.target_role), {
+      discipline: p.discipline, label: p.label, adjective: p.adjective,
+      storyDiscipline: p.storyDiscipline, focusTech: p.focusTech,
+    });
+    const raw = await callOpenAI(promptText, systemPrompt);
     const data = parseOpenAIJson(raw);
     let bullets = (data.bullets as string[]) || [];
     bullets = bullets.filter((b) => b && typeof b === "string").map((b) => b.trim());
