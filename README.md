@@ -88,7 +88,10 @@ Open <http://localhost:3000>.
 |---|---|
 | `resumes` | `id` (uuid, PK = auth user id), `resume_data` (jsonb) |
 | `profiles` | `id` (uuid), `name`, `batch`, `course`, `role` |
+| `shortlisted_resumes` | `student_id` (uuid, PK), `shortlisted_by` (uuid), `shortlisted_at` (timestamptz) |
 | `job_listings` | `id` (text, PK = JSearch job_id), `title`, `company`, `location`, `role_type`, `description`, `tags`, `fetched_at`, … |
+
+Domain notes are stored in the existing `signup_options` table with `category = 'domain_notes'`.
 
 Apply Row Level Security so users can read/write only their own `resumes` row, and `admin`
 profiles can read all `profiles`. The `job_listings` table is written by the cron route using

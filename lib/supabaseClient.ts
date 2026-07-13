@@ -276,6 +276,45 @@ export interface StudentWithResume extends ProfileRow {
   resume: Resume | null;
 }
 
+export interface ShortlistedResume {
+  student_id: string;
+  shortlisted_at: string;
+  student: StudentWithResume | null;
+}
+
+async function adminShortlistRequest(
+  method: "GET" | "POST" | "DELETE",
+  body?: { student_id: string }
+): Promise<{ ok: boolean; error: string | null; items?: ShortlistedResume[] }> {
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: "No active admin session.", items: [] };
+
+  try {
+    const response = await fetch("/api/admin/shortlisted-resumes", {
+      method,
+      headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const json = await response.json() as { error?: string; items?: ShortlistedResume[] };
+    if (!response.ok) return { ok: false, error: json.error || "Shortlist request failed.", items: [] };
+    return { ok: true, error: null, items: json.items || [] };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e), items: [] };
+  }
+}
+
+export function fetchShortlistedResumes() {
+  return adminShortlistRequest("GET");
+}
+
+export function shortlistResume(studentId: string) {
+  return adminShortlistRequest("POST", { student_id: studentId });
+}
+
+export function removeShortlistedResume(studentId: string) {
+  return adminShortlistRequest("DELETE", { student_id: studentId });
+}
+
 export async function fetchAllStudents(): Promise<{ students: ProfileRow[]; error: string | null }> {
   const client = getSupabaseClient();
   if (!client) return { students: [], error: "Supabase client is not configured." };

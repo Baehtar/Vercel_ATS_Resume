@@ -4,8 +4,12 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   fetchAllStudentsWithResumes,
+  fetchShortlistedResumes,
+  removeShortlistedResume,
   saveResumeForUser,
+  shortlistResume,
   signOutStudent,
+  type ShortlistedResume,
   type StudentWithResume,
 } from "@/lib/supabaseClient";
 import { generateResumeHtml, TEMPLATE_OPTIONS } from "@/lib/resumeTemplates";
@@ -15,8 +19,9 @@ import KeywordsEditor from "./KeywordsEditor";
 import BatchesEditor from "./BatchesEditor";
 import ProjectsEditor from "./ProjectsEditor";
 import PromptEditor from "./PromptEditor";
+import DomainNotesEditor from "./DomainNotesEditor";
 
-type AdminTab = "students" | "keywords" | "batches" | "projects" | "prompts";
+type AdminTab = "students" | "shortlisted" | "domains" | "keywords" | "batches" | "projects" | "prompts";
 type ResumePanel = "preview" | "edit";
 
 interface EditState {
@@ -42,6 +47,9 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
   const [students, setStudents] = useState<StudentWithResume[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shortlisted, setShortlisted] = useState<ShortlistedResume[]>([]);
+  const [shortlistBusy, setShortlistBusy] = useState<string | null>(null);
+  const [shortlistError, setShortlistError] = useState<string | null>(null);
 
   const [searchName, setSearchName] = useState("");
   const [filterBatch, setFilterBatch] = useState("All");
@@ -54,6 +62,16 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
         if (json.items?.length) setBatchOptions(json.items);
       })
       .catch(() => {});
+  }, []);
+
+  const loadShortlisted = async () => {
+    const res = await fetchShortlistedResumes();
+    setShortlisted(res.items || []);
+    setShortlistError(res.error);
+  };
+
+  useEffect(() => {
+    loadShortlisted();
   }, []);
   const [filterResume, setFilterResume] = useState<"All" | "Saved" | "Not saved">("All");
   const [filterExp, setFilterExp] = useState<"All" | "0" | "1+" | "3+">("All");
@@ -139,6 +157,22 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
     }
   };
 
+  const toggleShortlist = async (student: StudentWithResume) => {
+    if (!student.resume) return;
+    const isShortlisted = shortlisted.some((item) => item.student_id === student.id);
+    setShortlistBusy(student.id);
+    setShortlistError(null);
+    const result = isShortlisted
+      ? await removeShortlistedResume(student.id)
+      : await shortlistResume(student.id);
+    setShortlistBusy(null);
+    if (!result.ok) {
+      setShortlistError(result.error || "Could not update shortlist.");
+      return;
+    }
+    await loadShortlisted();
+  };
+
   const previewHtml = selectedStudent?.resume
     ? generateResumeHtml(selectedStudent.resume, templateId)
     : "";
@@ -155,6 +189,8 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
 
       <div className="tabs">
         <button className={`tab ${activeTab === "students" ? "active" : ""}`} onClick={() => setActiveTab("students")}>Students</button>
+        <button className={`tab ${activeTab === "shortlisted" ? "active" : ""}`} onClick={() => setActiveTab("shortlisted")}>Shortlisted Resumes</button>
+        <button className={`tab ${activeTab === "domains" ? "active" : ""}`} onClick={() => setActiveTab("domains")}>Domain Notes</button>
         <button className={`tab ${activeTab === "keywords" ? "active" : ""}`} onClick={() => setActiveTab("keywords")}>Keyword Options</button>
         <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>Batches</button>
         <button className={`tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>Projects</button>
@@ -175,6 +211,41 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
 
       {activeTab === "keywords" && (
         <><KeywordsEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
+      )}
+
+      {activeTab === "shortlisted" && (
+        <>
+          <div className="panel" style={{ marginBottom: 16 }}>
+            <h3 style={{ marginTop: 0 }}>Shortlisted Resume Dump</h3>
+            <p className="caption" style={{ marginBottom: 0 }}>
+              Resumes flagged here are stored for future AI training. Adding a resume records the shortlist decision; it does not train anything yet.
+            </p>
+          </div>
+          {shortlistError && <div className="alert alert-error">Could not load shortlist: {shortlistError}</div>}
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead><tr><th>Name / Email</th><th>Course</th><th>Experience</th><th>Flagged</th><th>Actions</th></tr></thead>
+              <tbody>
+                {shortlisted.length === 0 ? (
+                  <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: 24 }}>No resumes have been shortlisted yet.</td></tr>
+                ) : shortlisted.map((item) => item.student && (
+                  <tr key={item.student_id}>
+                    <td><div style={{ fontWeight: 600 }}>{item.student.name || item.student.resume?.personal.fullName || "N/A"}</div><div style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>{item.student.email || ""}</div></td>
+                    <td>{item.student.course || "N/A"}</td>
+                    <td>{item.student.experience_count}</td>
+                    <td style={{ color: "var(--text-muted)" }}>{new Date(item.shortlisted_at).toLocaleDateString()}</td>
+                    <td><button style={{ padding: "5px 12px", fontSize: "0.78rem" }} onClick={() => openStudent(item.student!)}>View / Edit</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <hr /><button className="full" onClick={handleSignOut}>Sign Out</button>
+        </>
+      )}
+
+      {activeTab === "domains" && (
+        <><DomainNotesEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
       )}
 
       {activeTab === "students" && (
@@ -234,13 +305,14 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                     <th>Domain</th>
                     <th>Experience</th>
                     <th>Resume</th>
+                    <th>Shortlist</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: 24 }}>
+                      <td colSpan={9} style={{ textAlign: "center", color: "var(--text-muted)", padding: 24 }}>
                         No students match the current filters.
                       </td>
                     </tr>
@@ -298,6 +370,18 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                         {s.has_resume
                           ? <span className="badge-green">✓ Saved</span>
                           : <span className="badge-gray">— None</span>}
+                      </td>
+                      <td>
+                        <button
+                          className={shortlisted.some((item) => item.student_id === s.id) ? "ghost" : "primary"}
+                          style={{ padding: "5px 10px", fontSize: "0.76rem" }}
+                          disabled={!s.has_resume || shortlistBusy === s.id}
+                          onClick={() => toggleShortlist(s)}
+                        >
+                          {shortlistBusy === s.id
+                            ? "Saving..."
+                            : shortlisted.some((item) => item.student_id === s.id) ? "Remove flag" : "Shortlist"}
+                        </button>
                       </td>
                       <td>
                         <button style={{ padding: "5px 12px", fontSize: "0.78rem" }} onClick={() => openStudent(s)}>
