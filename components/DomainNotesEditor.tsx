@@ -203,8 +203,8 @@ export default function DomainNotesEditor() {
           )}
 
           {items.map((item, index) => (
-            <div key={`${item.domain}-${index}`} className="panel" style={{ padding: "12px 16px", marginBottom: 8 }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <div key={`${item.domain}-${index}`} className="panel domain-note-card">
+              <div className="domain-note-row">
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>{item.domain}</div>
                   {item.topics.length === 0 && <div className="muted" style={{ marginTop: 5 }}>No topics added.</div>}
@@ -217,9 +217,9 @@ export default function DomainNotesEditor() {
                     </div>
                   ))}
                 </div>
-                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                  <button className="icon-btn" onClick={() => startEdit(item, index)} title="Edit">Edit</button>
-                  <button className="icon-btn" onClick={() => remove(index)} disabled={saving} title="Remove">Remove</button>
+                <div className="domain-note-actions">
+                  <button className="domain-action-btn" onClick={() => startEdit(item, index)}>Edit</button>
+                  <button className="domain-action-btn danger" onClick={() => remove(index)} disabled={saving}>Remove</button>
                 </div>
               </div>
             </div>
@@ -247,7 +247,7 @@ export default function DomainNotesEditor() {
                     onChange={(e) => updateTopic(topicIndex, { topic: e.target.value })}
                   />
                   {topic.points.map((point, pointIndex) => (
-                    <div key={pointIndex} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 8 }}>
+                    <div key={pointIndex} className="domain-point-row">
                       <textarea
                         rows={2}
                         value={point}
@@ -255,7 +255,7 @@ export default function DomainNotesEditor() {
                         onChange={(e) => updatePoint(topicIndex, pointIndex, e.target.value)}
                         style={{ flex: 1, margin: 0 }}
                       />
-                      <button className="icon-btn" onClick={() => removePoint(topicIndex, pointIndex)} disabled={topic.points.length === 1} title="Remove point">Remove</button>
+                      <button className="domain-action-btn danger" onClick={() => removePoint(topicIndex, pointIndex)} disabled={topic.points.length === 1}>Remove</button>
                     </div>
                   ))}
                   <button style={{ marginTop: 8 }} onClick={() => addPoint(topicIndex)}>+ Add Bullet / Textbox</button>

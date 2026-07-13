@@ -184,10 +184,19 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
   };
 
   return (
-    <div className="main">
-      <h2 style={{ color: "var(--premium-white)" }}>Admin Dashboard</h2>
+    <div className="main admin-portal">
+      <header className="admin-header">
+        <div className="admin-header-copy">
+          <img className="admin-logo" src="/consoleflare-logo.svg" alt="Consoleflare" />
+          <h1>Admin Workspace</h1>
+          <p>Manage learners, resume quality, and the knowledge base for your programme.</p>
+        </div>
+        <div className="admin-header-actions">
+          <button className="admin-signout" onClick={handleSignOut}>Sign Out</button>
+        </div>
+      </header>
 
-      <div className="tabs">
+      <nav className="tabs admin-tabs" aria-label="Admin sections">
         <button className={`tab ${activeTab === "students" ? "active" : ""}`} onClick={() => setActiveTab("students")}>Students</button>
         <button className={`tab ${activeTab === "shortlisted" ? "active" : ""}`} onClick={() => setActiveTab("shortlisted")}>Shortlisted Resumes</button>
         <button className={`tab ${activeTab === "domains" ? "active" : ""}`} onClick={() => setActiveTab("domains")}>Domain Notes</button>
@@ -195,22 +204,22 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
         <button className={`tab ${activeTab === "batches" ? "active" : ""}`} onClick={() => setActiveTab("batches")}>Batches</button>
         <button className={`tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>Projects</button>
         <button className={`tab ${activeTab === "prompts" ? "active" : ""}`} onClick={() => setActiveTab("prompts")}>AI Prompts</button>
-      </div>
+      </nav>
 
       {activeTab === "prompts" && (
-        <><PromptEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
+        <PromptEditor />
       )}
 
       {activeTab === "projects" && (
-        <><ProjectsEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
+        <ProjectsEditor />
       )}
 
       {activeTab === "batches" && (
-        <><BatchesEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
+        <BatchesEditor />
       )}
 
       {activeTab === "keywords" && (
-        <><KeywordsEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
+        <KeywordsEditor />
       )}
 
       {activeTab === "shortlisted" && (
@@ -240,12 +249,11 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
               </tbody>
             </table>
           </div>
-          <hr /><button className="full" onClick={handleSignOut}>Sign Out</button>
         </>
       )}
 
       {activeTab === "domains" && (
-        <><DomainNotesEditor /><hr /><button className="full" onClick={handleSignOut}>Sign Out</button></>
+        <DomainNotesEditor />
       )}
 
       {activeTab === "students" && (
@@ -560,8 +568,6 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
             </div>
           )}
 
-          <hr />
-          <button className="full" onClick={handleSignOut}>Sign Out</button>
         </>
       )}
     </div>
