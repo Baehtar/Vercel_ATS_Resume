@@ -191,7 +191,7 @@ export function analyzeResume(resume: Resume, selectedRole: string): AtsReport {
   } else {
     analysis.formatting_warnings.push({
       type: "warning",
-      message: "Professional summary is missing or too short. Write a 2-3 sentence pitch.",
+      message: "Recruiter summary is missing or too short. Add three concise screening bullets.",
     });
   }
 
@@ -291,7 +291,7 @@ export function analyzeResume(resume: Resume, selectedRole: string): AtsReport {
       fmtPoints -= 3;
       analysis.formatting_warnings.push({
         type: "warning",
-        message: `Short employment gap detected (${maxGap} month${maxGap > 1 ? "s" : ""}). Consider addressing this in your professional summary.`,
+        message: `Short employment gap detected (${maxGap} month${maxGap > 1 ? "s" : ""}). Consider addressing this in your recruiter summary.`,
       });
     }
   }

@@ -42,7 +42,7 @@ export default function PromptEditor() {
     <div>
       <h3 style={{ margin: "0 0 4px" }}>AI Prompt Editor</h3>
       <p className="caption" style={{ margin: "0 0 16px" }}>
-        Edit the instructions sent to the AI. Keep the requested JSON output format so the generator can read the response. Available placeholders: <code>{"{{discipline}}"}</code>, <code>{"{{label}}"}</code>, <code>{"{{adjective}}"}</code>, <code>{"{{storyDiscipline}}"}</code>, and <code>{"{{focusTech}}"}</code>.
+        Edit the instructions sent to the AI. Experience and story prompts should keep their JSON output format; the summary prompt may return plain 3-bullet text or JSON with a summary key. Available placeholders: <code>{"{{discipline}}"}</code>, <code>{"{{label}}"}</code>, <code>{"{{adjective}}"}</code>, <code>{"{{storyDiscipline}}"}</code>, and <code>{"{{focusTech}}"}</code>.
       </p>
       {msg && <div className={`alert alert-${msg.kind}`} style={{ marginBottom: 12 }}>{msg.text}</div>}
       {loading ? <p className="muted"><span className="spinner" />Loading prompts...</p> : (

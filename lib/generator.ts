@@ -161,15 +161,19 @@ export function buildSummaryPrompt(targetRole?: string): string {
   const p = getRoleProfile(targetRole);
   return `You are an expert ${p.discipline} Resume Writer with experience hiring ${p.label}s at product companies, consulting firms, and Fortune 500 organizations.
 
-Your task is to write a concise, exactly 2-sentence resume summary that follows this exact format:
-"[Target Role] with [X]+ years of experience building [core products/solutions/pipelines] using [tools]. Experienced in [activity 1], [activity 2], and [activity 3]."
+Task:
+Read the full resume text provided and produce exactly 3 bullet points that summarize the candidate.
+Each bullet should cover a distinct angle without repeating the same theme.
 
 Constraint rules:
-1. Do NOT use cliché buzzwords or filler phrases like 'proven', 'strong', 'proven track record', or 'strong track record'.
-2. The summary must consist of exactly two sentences matching the template above.
-3. If the candidate has 0 years of experience, adapt the first sentence to: "[Target Role] with a background in building [core projects/solutions] using [tools]."
+1. Bullet 1: who they are, their domain, and experience level.
+2. Bullet 2: strongest achievement or impact, with numbers if available.
+3. Bullet 3: key skill set or differentiator.
+4. Keep each bullet to one line, around 20 words or fewer.
+5. Ground every bullet only in the resume content. Do not add assumptions or filler.
+6. Prioritize specific titles, tools, numbers, certifications, projects, and domains over vague adjectives.
 
-Return only valid JSON with a key named summary.`;
+Output only the 3 bullet points. No header or extra commentary.`;
 }
 
 // Backward-compatible default constants (Data Engineer flavour).
@@ -263,20 +267,34 @@ interface PersonalLike {
   headline?: string;
 }
 
-function fallbackSummary(
-  personal: PersonalLike,
-  experience: unknown[],
-  targetRole: string
-): { summary: string } {
+function fallbackSummary(input: SummaryInput): { summary: string } {
+  const personal = input.personal || {};
   const name = (personal.fullName || "").trim();
   const title =
     (personal.headline || "").trim() ||
-    targetRole.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-  const expCount = experience.length;
-  let summary =
-    `${title} with ${expCount} experience entries and a focus on ${targetRole.replace(/_/g, " ")}. ` +
-    `Skilled at translating technical work into business impact and building ATS-friendly resumes.`;
-  if (name) summary = `${name} is ${summary}`;
+    input.target_role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const expCount = input.experience.length;
+  const roleLabel = input.target_role.replace(/_/g, " ");
+  const projectNames = input.projects.map((p) => p.name).filter(Boolean).slice(0, 2).join(", ");
+  const skills = input.skills.map((s) => s.list).filter(Boolean).join(", ");
+  const primarySkill = skills.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4).join(", ");
+  const education = input.education.find((e) => e.degree || e.school);
+  const identity = name ? `${name}, ${title}` : title;
+  const achievement = projectNames
+    ? `Project experience includes ${projectNames}.`
+    : expCount
+      ? `Experience includes ${expCount} listed role${expCount === 1 ? "" : "s"} or internship${expCount === 1 ? "" : "s"}.`
+      : education
+        ? `Education includes ${[education.degree, education.school].filter(Boolean).join(" from ")}.`
+        : `Profile is oriented toward ${roleLabel} opportunities.`;
+  const differentiator = primarySkill
+    ? `Key skills include ${primarySkill}.`
+    : `Differentiator is a resume built around ${roleLabel} screening signals.`;
+  const summary = [
+    `- ${identity} with ${expCount || "entry-level"} resume experience in ${roleLabel}.`,
+    `- ${achievement}`,
+    `- ${differentiator}`,
+  ].join("\n");
   return { summary };
 }
 
@@ -344,6 +362,47 @@ export interface SummaryInput {
   target_role: string;
 }
 
+function cleanSummaryBulletLine(line: string): string {
+  return line
+    .trim()
+    .replace(/^[-*\u2022\d.)\s]+/, "")
+    .trim();
+}
+
+function normalizeSummaryOutput(summary: string): string {
+  const cleaned = summary.trim();
+  if (!cleaned) return "";
+
+  const lines = cleaned
+    .split(/\r?\n+/)
+    .map(cleanSummaryBulletLine)
+    .filter(Boolean);
+
+  if (lines.length >= 2) {
+    return lines.slice(0, 3).map((line) => `- ${line}`).join("\n");
+  }
+
+  return cleaned;
+}
+
+function parseSummaryResponse(raw: string): string {
+  try {
+    const data = parseOpenAIJson(raw);
+    if (typeof data.summary === "string") {
+      return normalizeSummaryOutput(data.summary);
+    }
+    if (Array.isArray(data.summary)) {
+      return normalizeSummaryOutput(data.summary.filter((item) => typeof item === "string").join("\n"));
+    }
+    if (Array.isArray(data.bullets)) {
+      return normalizeSummaryOutput(data.bullets.filter((item) => typeof item === "string").join("\n"));
+    }
+  } catch {
+    // Admins can intentionally request plain bullet text instead of JSON.
+  }
+  return normalizeSummaryOutput(raw);
+}
+
 export async function generateProfessionalSummary(input: SummaryInput) {
   const experienceSummary = input.experience
     .filter((e) => e.role || e.company)
@@ -364,13 +423,8 @@ export async function generateProfessionalSummary(input: SummaryInput) {
 
   const profile = getRoleProfile(input.target_role);
   const promptText =
-    `You are an expert ${profile.discipline} Resume Writer with experience hiring ${profile.label}s at product companies, consulting firms, and Fortune 500 organizations. ` +
-    `Write a concise, exactly 2-sentence resume summary based on the complete candidate profile below. ` +
-    `The summary must follow this exact format:\n` +
-    `"[Target Role] with [X]+ years of experience building [core products/solutions/pipelines] using [tools]. Experienced in [activity 1], [activity 2], and [activity 3]."\n` +
-    `If the candidate has 0 years of experience, adapt the first sentence to: "[Target Role] with a background in building [core projects/solutions] using [tools]."\n` +
-    `Do NOT use cliché buzzwords or filler phrases like 'proven', 'strong', 'proven track record', or 'strong track record'. ` +
-    "Return only valid JSON with a key named summary.\n\n" +
+    `Use the resume content below to generate the candidate screening summary for a ${profile.label} role. ` +
+    `Follow the summary instructions from the system prompt exactly.\n\n` +
     `Profile Headline:\n${input.personal.headline || ""}\n` +
     `Current Profile Statement:\n${input.profile_statement || ""}\n` +
     `Experience:\n${experienceSummary}\n` +
@@ -386,9 +440,8 @@ export async function generateProfessionalSummary(input: SummaryInput) {
       discipline: p.discipline, label: p.label,
     });
     const raw = await callOpenAI(promptText, systemPrompt);
-    const data = parseOpenAIJson(raw);
     return {
-      summary: ((data.summary as string) || "").trim(),
+      summary: parseSummaryResponse(raw),
       api_used: true,
       api_error: null,
     };
@@ -396,7 +449,7 @@ export async function generateProfessionalSummary(input: SummaryInput) {
     apiError = e instanceof Error ? e.message : String(e);
   }
 
-  const fb = fallbackSummary(input.personal, input.experience, input.target_role);
+  const fb = fallbackSummary(input);
   return { summary: fb.summary, api_used: false, api_error: apiError };
 }
 
@@ -468,7 +521,7 @@ export async function generateInterviewStory(input: StoryInput): Promise<StoryOu
     `Name: ${input.full_name}\n` +
     `Target Role: ${input.target_role}\n` +
     `Headline: ${input.headline}\n` +
-    `Professional Summary:\n${input.summary}\n\n` +
+    `Recruiter Summary:\n${input.summary}\n\n` +
     `Experience:\n${input.experience_text}\n\n` +
     `Projects:\n${input.projects_text}\n\n` +
     `Skills:\n${input.skills_text}\n`;

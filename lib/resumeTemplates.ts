@@ -635,6 +635,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                 margin: 0 0 3pt 0;
                 text-align: justify;
             }
+            .summary-text { white-space: pre-line; }
             .resume-bullets { margin: 0; padding-left: 14pt; }
             .resume-bullets li { font-size: 9.2pt; margin-bottom: 2pt; list-style-type: disc; }
             .skills-block, .certifications-block { font-size: 9.2pt; }

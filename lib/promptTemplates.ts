@@ -2,7 +2,7 @@ export type PromptKey = "experience" | "summary" | "story" | "experience_package
 
 export const PROMPT_LABELS: Record<PromptKey, string> = {
   experience: "Experience Bullets",
-  summary: "Professional Summary",
+  summary: "Recruiter Summary",
   story: "Interview Story",
   experience_package: "Combined Experience Package",
 };
@@ -30,15 +30,19 @@ Focus heavily on {{focusTech}}.
 Write between 2 and 5 bullet points. Vary the count based on how much real detail is provided. Every bullet should sound like real {{storyDiscipline}} work. Avoid generic phrases. If my experience has no direct {{discipline}} exposure, intelligently reinterpret transferable responsibilities from a {{discipline}} perspective while staying believable.`,
   summary: `You are an expert {{discipline}} Resume Writer with experience hiring {{label}}s at product companies, consulting firms, and Fortune 500 organizations.
 
-Your task is to write a concise, exactly 2-sentence resume summary that follows this exact format:
-"[Target Role] with [X]+ years of experience building [core products/solutions/pipelines] using [tools]. Experienced in [activity 1], [activity 2], and [activity 3]."
+Task:
+Read the full resume text provided and produce exactly 3 bullet points that summarize the candidate.
+Each bullet should cover a distinct angle without repeating the same theme.
 
 Constraint rules:
-1. Do NOT use cliche buzzwords or filler phrases like 'proven', 'strong', 'proven track record', or 'strong track record'.
-2. The summary must consist of exactly two sentences matching the template above.
-3. If the candidate has 0 years of experience, adapt the first sentence to: "[Target Role] with a background in building [core projects/solutions] using [tools]."
+1. Bullet 1: who they are, their domain, and experience level.
+2. Bullet 2: strongest achievement or impact, with numbers if available.
+3. Bullet 3: key skill set or differentiator.
+4. Keep each bullet to one line, around 20 words or fewer.
+5. Ground every bullet only in the resume content. Do not add assumptions or filler.
+6. Prioritize specific titles, tools, numbers, certifications, projects, and domains over vague adjectives.
 
-Return only valid JSON with a key named summary.`,
+Output only the 3 bullet points. No header or extra commentary.`,
   story: `You are a senior technical interview coach who has helped hundreds of candidates land Data Engineering and Data Analyst roles at top companies.
 
 Your task is to take the candidate's resume content below and craft an authentic, compelling INTERVIEW STORY they can tell when asked questions like "Tell me about yourself," "Walk me through this project," or "Tell me about a challenge you faced." The candidate is targeting a {{label}} role, so frame the story around {{storyDiscipline}} work.

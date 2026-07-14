@@ -1,4 +1,4 @@
-// app/api/generate-summary/route.ts - Generate a professional summary from the full profile
+// app/api/generate-summary/route.ts - Generate a recruiter summary from the full profile
 import { NextResponse } from "next/server";
 import { generateProfessionalSummary, type SummaryInput } from "@/lib/generator";
 import { getUserFromAuthHeader } from "@/lib/supabaseServer";
