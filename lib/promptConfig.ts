@@ -3,6 +3,14 @@ import { DEFAULT_PROMPT_TEMPLATES, renderPromptTemplate, type PromptKey } from "
 
 const PREFIX = "ai_prompt_";
 
+export function isLegacySummaryPrompt(key: PromptKey, value: string): boolean {
+  if (key !== "summary") return false;
+  const lower = value.toLowerCase();
+  return lower.includes("exactly 2-sentence") ||
+    lower.includes("exactly two sentences") ||
+    lower.includes("must consist of exactly two sentences");
+}
+
 export async function getConfiguredPrompt(
   key: PromptKey,
   fallback: string,
@@ -20,6 +28,7 @@ export async function getConfiguredPrompt(
       .eq("category", `${PREFIX}${key}`)
       .single();
     const value = Array.isArray(data?.items) && typeof data.items[0] === "string" ? data.items[0].trim() : "";
+    if (isLegacySummaryPrompt(key, value)) return renderPromptTemplate(fallback, values);
     return renderPromptTemplate(value || fallback, values);
   } catch {
     return renderPromptTemplate(fallback, values);

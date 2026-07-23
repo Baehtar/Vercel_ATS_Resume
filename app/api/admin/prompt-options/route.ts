@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserFromAuthHeader } from "@/lib/supabaseServer";
 import { DEFAULT_PROMPT_TEMPLATES, PROMPT_LABELS, type PromptKey } from "@/lib/promptTemplates";
+import { isLegacySummaryPrompt } from "@/lib/promptConfig";
 
 export const runtime = "nodejs";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -29,7 +30,8 @@ export async function GET() {
     for (const row of data || []) {
       const key = row.category.replace("ai_prompt_", "") as PromptKey;
       if (keys.includes(key) && Array.isArray(row.items) && typeof row.items[0] === "string" && row.items[0].trim()) {
-        values[key] = row.items[0];
+        const prompt = row.items[0].trim();
+        values[key] = isLegacySummaryPrompt(key, prompt) ? DEFAULT_PROMPT_TEMPLATES[key] : prompt;
       }
     }
   }

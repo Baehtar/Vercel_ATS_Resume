@@ -80,12 +80,12 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          profile_statement: resume.summary,
           personal: resume.personal,
           experience: resume.experience,
           education: resume.education,
           projects: resume.projects,
           skills: resume.skills,
+          certifications: resume.certifications,
           target_role: targetRole,
         }),
       });

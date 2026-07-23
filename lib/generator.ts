@@ -278,8 +278,10 @@ function fallbackSummary(input: SummaryInput): { summary: string } {
   const projectNames = input.projects.map((p) => p.name).filter(Boolean).slice(0, 2).join(", ");
   const skills = input.skills.map((s) => s.list).filter(Boolean).join(", ");
   const primarySkill = skills.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4).join(", ");
+  const certification = (input.certifications || []).find((c) => c.name || c.issuer);
   const education = input.education.find((e) => e.degree || e.school);
   const identity = name ? `${name}, ${title}` : title;
+  const experienceLevel = expCount ? `${expCount} listed experience entr${expCount === 1 ? "y" : "ies"}` : "entry-level profile";
   const achievement = projectNames
     ? `Project experience includes ${projectNames}.`
     : expCount
@@ -289,9 +291,11 @@ function fallbackSummary(input: SummaryInput): { summary: string } {
         : `Profile is oriented toward ${roleLabel} opportunities.`;
   const differentiator = primarySkill
     ? `Key skills include ${primarySkill}.`
+    : certification
+      ? `Certification signal includes ${[certification.name, certification.issuer].filter(Boolean).join(" from ")}.`
     : `Differentiator is a resume built around ${roleLabel} screening signals.`;
   const summary = [
-    `- ${identity} with ${expCount || "entry-level"} resume experience in ${roleLabel}.`,
+    `- ${identity} with ${experienceLevel} in ${roleLabel}.`,
     `- ${achievement}`,
     `- ${differentiator}`,
   ].join("\n");
@@ -354,12 +358,40 @@ export async function generateEntryBullets(entry: EntryInfo) {
 
 export interface SummaryInput {
   profile_statement?: string;
-  personal: PersonalLike;
-  experience: { role?: string; company?: string }[];
-  education: { degree?: string; school?: string }[];
-  projects: { name?: string; tech?: string }[];
+  personal: PersonalLike & {
+    location?: string;
+    linkedin?: string;
+    github?: string;
+    website?: string;
+  };
+  experience: {
+    role?: string;
+    company?: string;
+    location?: string;
+    startDate?: string;
+    endDate?: string;
+    bullets?: string[];
+  }[];
+  education: {
+    degree?: string;
+    school?: string;
+    location?: string;
+    date?: string;
+    details?: string;
+  }[];
+  projects: {
+    name?: string;
+    tech?: string;
+    link?: string;
+    description?: string;
+  }[];
   skills: { category?: string; list?: string }[];
+  certifications?: { name?: string; issuer?: string; date?: string }[];
   target_role: string;
+}
+
+function joinNonEmpty(parts: Array<string | undefined>, separator = " | "): string {
+  return parts.map((part) => (part || "").trim()).filter(Boolean).join(separator);
 }
 
 function cleanSummaryBulletLine(line: string): string {
@@ -405,32 +437,57 @@ function parseSummaryResponse(raw: string): string {
 
 export async function generateProfessionalSummary(input: SummaryInput) {
   const experienceSummary = input.experience
-    .filter((e) => e.role || e.company)
-    .map((e) => `${e.role || ""} at ${e.company || ""}`)
-    .join("\n");
+    .filter((e) => e.role || e.company || e.bullets?.some((bullet) => bullet.trim()))
+    .map((e) => {
+      const header = joinNonEmpty([
+        e.role,
+        e.company ? `at ${e.company}` : "",
+        e.location,
+        joinNonEmpty([e.startDate, e.endDate], " to "),
+      ]);
+      const bullets = (e.bullets || [])
+        .map((bullet) => bullet.trim())
+        .filter(Boolean)
+        .map((bullet) => `  - ${bullet}`)
+        .join("\n");
+      return [header, bullets].filter(Boolean).join("\n");
+    })
+    .join("\n\n");
   const educationSummary = input.education
-    .filter((e) => e.degree || e.school)
-    .map((e) => `${e.degree || ""} from ${e.school || ""}`)
+    .filter((e) => e.degree || e.school || e.details)
+    .map((e) => joinNonEmpty([e.degree, e.school ? `from ${e.school}` : "", e.location, e.date, e.details]))
     .join("\n");
   const projectsSummary = input.projects
-    .filter((p) => p.name)
-    .map((p) => `${p.name || ""} (${p.tech || ""})`)
+    .filter((p) => p.name || p.tech || p.description)
+    .map((p) => joinNonEmpty([p.name, p.tech ? `Tech: ${p.tech}` : "", p.description, p.link ? `Link: ${p.link}` : ""]))
     .join("\n");
   const skillsSummary = input.skills
     .filter((s) => s.list)
     .map((s) => `${s.category || ""} | ${s.list || ""}`)
     .join("\n");
+  const certificationSummary = (input.certifications || [])
+    .filter((c) => c.name || c.issuer)
+    .map((c) => joinNonEmpty([c.name, c.issuer ? `Issuer: ${c.issuer}` : "", c.date]))
+    .join("\n");
+  const personalSummary = joinNonEmpty([
+    input.personal.fullName,
+    input.personal.headline,
+    input.personal.location,
+    input.personal.linkedin,
+    input.personal.github,
+    input.personal.website,
+  ]);
 
   const profile = getRoleProfile(input.target_role);
   const promptText =
     `Use the resume content below to generate the candidate screening summary for a ${profile.label} role. ` +
     `Follow the summary instructions from the system prompt exactly.\n\n` +
-    `Profile Headline:\n${input.personal.headline || ""}\n` +
-    `Current Profile Statement:\n${input.profile_statement || ""}\n` +
+    `Personal:\n${personalSummary}\n` +
     `Experience:\n${experienceSummary}\n` +
     `Education:\n${educationSummary}\n` +
     `Projects:\n${projectsSummary}\n` +
     `Skills:\n${skillsSummary}\n` +
+    `Certifications:\n${certificationSummary}\n` +
     `Target Role:\n${input.target_role}\n`;
 
   let apiError: string | null = null;
