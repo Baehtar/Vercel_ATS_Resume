@@ -10,9 +10,10 @@ import type { Resume } from "@/lib/types";
 interface Props {
   resume: Resume;
   notify: (text: string) => void;
+  onPersonalise: (missingKeywords: string[]) => void;
 }
 
-export default function JdKeywordPanel({ resume, notify }: Props) {
+export default function JdKeywordPanel({ resume, notify, onPersonalise }: Props) {
   const [jdText, setJdText] = useState("");
   const [submitted, setSubmitted] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
@@ -165,6 +166,17 @@ export default function JdKeywordPanel({ resume, notify }: Props) {
                 <p className="caption" style={{ marginTop: 0, marginBottom: 8 }}>
                   Click a keyword to copy it, then paste it into your Skills,
                   Summary, or Experience bullets.
+                </p>
+                <button
+                  className="btn-cta"
+                  style={{ marginBottom: 10 }}
+                  onClick={() => onPersonalise(display.missing)}
+                >
+                  Personalise Resume to Job
+                </button>
+                <p className="caption" style={{ marginTop: 0, marginBottom: 8 }}>
+                  Adds these recognised keywords to your Skills and Tools groups.
+                  Keep only skills you can confidently discuss in an interview.
                 </p>
                 <div className="chip-select">
                   {display.missing.map((kw) => (

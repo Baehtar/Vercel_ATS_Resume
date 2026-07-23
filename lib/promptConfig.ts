@@ -8,7 +8,10 @@ export function isLegacySummaryPrompt(key: PromptKey, value: string): boolean {
   const lower = value.toLowerCase();
   return lower.includes("exactly 2-sentence") ||
     lower.includes("exactly two sentences") ||
-    lower.includes("must consist of exactly two sentences");
+    lower.includes("must consist of exactly two sentences") ||
+    (lower.includes("keep it to 2-3 concise sentences") && !lower.includes("implied first person")) ||
+    lower.includes("produce exactly 3 bullet points") ||
+    (lower.includes("bullet 1: who they are") && lower.includes("bullet 3: key skill set"));
 }
 
 export async function getConfiguredPrompt(

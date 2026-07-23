@@ -83,6 +83,32 @@ const TECH_TERMS: string[] = [
 // Sort longest first so multi-word phrases are matched before their sub-words
 const SORTED_TERMS = [...TECH_TERMS].sort((a, b) => b.length - a.length);
 
+// Named products, platforms, libraries, and infrastructure belong in a tools
+// group when tailoring a resume. Broader capabilities stay in Skills.
+const TOOL_TERMS = new Set(
+  [
+    "LangChain", "Hugging Face", "PyTorch", "TensorFlow", "Keras", "Scikit-learn",
+    "Pandas", "NumPy", "Matplotlib", "Seaborn", "Plotly", "Jupyter", "MLflow",
+    "Kubeflow", "Vertex AI", "SageMaker",
+    "Apache Spark", "PySpark", "Spark SQL", "Structured Streaming", "Apache Kafka",
+    "Kafka Streams", "Apache Flink", "Apache Airflow", "Airflow", "dbt",
+    "Great Expectations", "Delta Lake", "Delta Live Tables", "Auto Loader",
+    "AWS", "Azure", "GCP", "Google Cloud", "Azure Data Factory", "Azure Databricks",
+    "ADLS Gen2", "Azure Synapse Analytics", "Azure Key Vault", "Azure Event Hub",
+    "Azure DevOps", "Azure OpenAI Service", "Amazon S3", "Amazon Redshift",
+    "Amazon EMR", "Amazon Glue", "AWS Lambda", "AWS Glue", "Amazon Athena",
+    "Amazon Kinesis", "BigQuery", "Dataflow", "Pub/Sub", "Cloud Composer",
+    "Snowflake", "Databricks", "Redshift",
+    "PostgreSQL", "MySQL", "SQL Server", "Oracle", "SQLite", "MongoDB", "Cassandra",
+    "DynamoDB", "Redis", "Elasticsearch", "HBase", "CouchDB", "Neo4j", "InfluxDB",
+    "Hadoop", "HDFS", "Hive", "Pig",
+    "Power BI", "Tableau", "Looker", "Grafana", "Superset", "Google Analytics",
+    "Google Data Studio", "Excel", "Google Sheets",
+    "Docker", "Kubernetes", "Terraform", "Helm", "Ansible", "GitHub Actions",
+    "Jenkins", "GitLab CI", "ArgoCD", "Git", "Jira", "Confluence",
+  ].map((term) => term.toLowerCase())
+);
+
 // ─── Main extraction function ─────────────────────────────────────────────────
 
 export interface JdParseResult {
@@ -94,6 +120,20 @@ export interface JdParseResult {
   missing: string[];
   /** Frequency of each keyword in the JD (for sorting by importance) */
   frequency: Record<string, number>;
+}
+
+export function splitJdKeywordsForResume(keywords: string[]): {
+  skills: string[];
+  tools: string[];
+} {
+  const skills: string[] = [];
+  const tools: string[] = [];
+
+  for (const keyword of keywords) {
+    (TOOL_TERMS.has(keyword.toLowerCase()) ? tools : skills).push(keyword);
+  }
+
+  return { skills, tools };
 }
 
 export function parseJd(jdText: string, resume: Resume): JdParseResult {

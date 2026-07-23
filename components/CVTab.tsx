@@ -7,9 +7,10 @@ import { analyzeResume } from "@/lib/atsAnalyzer";
 import { generateResumeHtml, TEMPLATE_OPTIONS } from "@/lib/resumeTemplates";
 import { loadRoleKeywords } from "@/lib/roleKeywords";
 import { getProjectNames, getProjectByName, loadProjectPresets } from "@/lib/projectsDb";
-import { toDateInputValue, safeFileName } from "@/lib/resumeUtils";
+import { joinKeywords, toDateInputValue, safeFileName } from "@/lib/resumeUtils";
 import { getAccessToken } from "@/lib/supabaseClient";
 import { useKeywordOptions } from "@/lib/useKeywordOptions";
+import { splitJdKeywordsForResume } from "@/lib/jdParser";
 import KeywordInput from "./KeywordInput";
 import AtsAudit from "./AtsAudit";
 import ResumePreview, { printResume } from "./ResumePreview";
@@ -205,6 +206,47 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
     setPresetSelect("");
   };
 
+  const personaliseResumeToJob = (missingKeywords: string[]) => {
+    const { skills, tools } = splitJdKeywordsForResume(missingKeywords);
+    if (!skills.length && !tools.length) return;
+
+    patch((draft) => {
+      const isToolsGroup = (category: string) =>
+        /tool|platform|cloud|devops|framework|technology|tech/i.test(category);
+      const findOrCreateGroup = (kind: "skills" | "tools") => {
+        const matchingIndex = draft.skills.findIndex((group) =>
+          kind === "tools"
+            ? isToolsGroup(group.category)
+            : !isToolsGroup(group.category) &&
+              /skill|language|competenc|expertise|analytics|methodolog|engineering/i.test(group.category)
+        );
+
+        if (matchingIndex >= 0) return matchingIndex;
+
+        draft.skills.push({
+          category: kind === "tools" ? "Tools & Platforms" : "Technical Skills",
+          list: "",
+        });
+        return draft.skills.length - 1;
+      };
+
+      if (skills.length) {
+        const skillIndex = findOrCreateGroup("skills");
+        draft.skills[skillIndex].list = joinKeywords(draft.skills[skillIndex].list, skills);
+      }
+      if (tools.length) {
+        const toolIndex = findOrCreateGroup("tools");
+        draft.skills[toolIndex].list = joinKeywords(draft.skills[toolIndex].list, tools);
+      }
+    });
+
+    const sections = [
+      skills.length ? `${skills.length} skill${skills.length === 1 ? "" : "s"}` : "",
+      tools.length ? `${tools.length} tool${tools.length === 1 ? "" : "s"}` : "",
+    ].filter(Boolean);
+    notify(`Added ${sections.join(" and ")} from the job description to your resume.`);
+  };
+
   return (
     <div>
       {/* Top score banner */}
@@ -235,7 +277,11 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
           <h3>Resume Editor — {roleTitle}</h3>
 
           {/* JD Keyword Matcher */}
-          <JdKeywordPanel resume={resume} notify={notify} />
+          <JdKeywordPanel
+            resume={resume}
+            notify={notify}
+            onPersonalise={personaliseResumeToJob}
+          />
 
           {/* Personal */}
           <details className="expander" open>
@@ -809,11 +855,11 @@ export default function CVTab({ resume, onResumeChange, targetRole, notify }: Pr
                 Generate this last — it&apos;s written from everything you&apos;ve added above
                 (experience, education, projects, skills).
               </p>
-              <label className="field-label">Three-Bullet Screening Summary</label>
+              <label className="field-label">Recruiter Summary</label>
               <textarea
                 rows={4}
                 value={resume.summary}
-                placeholder="Three concise bullets covering identity, strongest impact, and key differentiator..."
+                placeholder="Professional summary in resume voice, without first- or third-person pronouns..."
                 onChange={(e) => patch((d) => (d.summary = e.target.value))}
               />
               <button className="btn-cta full" onClick={generateSummary} disabled={summaryBusy} style={{ marginTop: 8 }}>

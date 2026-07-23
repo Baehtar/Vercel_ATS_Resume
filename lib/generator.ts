@@ -162,18 +162,18 @@ export function buildSummaryPrompt(targetRole?: string): string {
   return `You are an expert ${p.discipline} Resume Writer with experience hiring ${p.label}s at product companies, consulting firms, and Fortune 500 organizations.
 
 Task:
-Read the full resume text provided and produce exactly 3 bullet points that summarize the candidate.
-Each bullet should cover a distinct angle without repeating the same theme.
+Read the full resume text provided and write one polished professional summary as a single paragraph.
+Use standard resume voice with an implied first person. Do not use the candidate's name or pronouns such as I, my, they, their, he, she, or "the candidate."
 
 Constraint rules:
-1. Bullet 1: who they are, their domain, and experience level.
-2. Bullet 2: strongest achievement or impact, with numbers if available.
-3. Bullet 3: key skill set or differentiator.
-4. Keep each bullet to one line, around 20 words or fewer.
-5. Ground every bullet only in the resume content. Do not add assumptions or filler.
+1. Open with the target professional identity, domain, and experience level when supported by the resume.
+2. Describe the strongest responsibilities and quantified achievement or business impact.
+3. Include relevant certifications, then close with the most important skills, tools, or business differentiator.
+4. Write 70-110 words in 3-5 well-connected sentences as one paragraph.
+5. Ground every statement only in the resume content. Do not add assumptions or filler.
 6. Prioritize specific titles, tools, numbers, certifications, projects, and domains over vague adjectives.
 
-Output only the 3 bullet points. No header or extra commentary.`;
+Output only the summary paragraph. No bullets, header, labels, first-person pronouns, third-person language, or extra commentary.`;
 }
 
 // Backward-compatible default constants (Data Engineer flavour).
@@ -269,7 +269,6 @@ interface PersonalLike {
 
 function fallbackSummary(input: SummaryInput): { summary: string } {
   const personal = input.personal || {};
-  const name = (personal.fullName || "").trim();
   const title =
     (personal.headline || "").trim() ||
     input.target_role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -280,25 +279,37 @@ function fallbackSummary(input: SummaryInput): { summary: string } {
   const primarySkill = skills.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4).join(", ");
   const certification = (input.certifications || []).find((c) => c.name || c.issuer);
   const education = input.education.find((e) => e.degree || e.school);
-  const identity = name ? `${name}, ${title}` : title;
-  const experienceLevel = expCount ? `${expCount} listed experience entr${expCount === 1 ? "y" : "ies"}` : "entry-level profile";
+  const impact = input.experience
+    .flatMap((entry) => entry.bullets || [])
+    .map((bullet) =>
+      bullet
+        .trim()
+        .replace(/^(?:[-*\u2022]\s+|\d+[.)]\s+)/, "")
+        .replace(/[.!?]+$/, "")
+    )
+    .find(Boolean);
+  const experienceLevel = expCount
+    ? `experience across ${expCount} relevant role${expCount === 1 ? "" : "s"} or internship${expCount === 1 ? "" : "s"}`
+    : "an entry-level background";
   const achievement = projectNames
-    ? `Project experience includes ${projectNames}.`
+    ? `Experienced in delivering practical projects including ${projectNames}, with work aligned to ${roleLabel} responsibilities.`
     : expCount
-      ? `Experience includes ${expCount} listed role${expCount === 1 ? "" : "s"} or internship${expCount === 1 ? "" : "s"}.`
+      ? `Experienced in applying role-relevant capabilities across professional and project environments.`
       : education
-        ? `Education includes ${[education.degree, education.school].filter(Boolean).join(" from ")}.`
-        : `Profile is oriented toward ${roleLabel} opportunities.`;
+        ? `Backed by ${[education.degree, education.school].filter(Boolean).join(" from ")}, with a foundation relevant to ${roleLabel} opportunities.`
+        : `Focused on building practical capability for ${roleLabel} opportunities.`;
+  const credential = certification
+    ? `${[certification.name, certification.issuer ? `from ${certification.issuer}` : ""].filter(Boolean).join(" ")}.`
+    : education
+      ? `Academic background includes ${[education.degree, education.school ? `from ${education.school}` : ""].filter(Boolean).join(" ")}.`
+      : "";
+  const impactSentence = impact ? `${impact}.` : "";
   const differentiator = primarySkill
-    ? `Key skills include ${primarySkill}.`
-    : certification
-      ? `Certification signal includes ${[certification.name, certification.issuer].filter(Boolean).join(" from ")}.`
-    : `Differentiator is a resume built around ${roleLabel} screening signals.`;
-  const summary = [
-    `- ${identity} with ${experienceLevel} in ${roleLabel}.`,
-    `- ${achievement}`,
-    `- ${differentiator}`,
-  ].join("\n");
+    ? `Skilled in ${primarySkill}, with a focused toolkit for ${roleLabel} work.`
+    : `Equipped with a focused combination of education, practical exposure, and role-relevant capabilities.`;
+  const summary = `${title} with ${experienceLevel} aligned with ${roleLabel} work. ${achievement} ${impactSentence} ${credential} ${differentiator}`
+    .replace(/\s+/g, " ")
+    .trim();
   return { summary };
 }
 
@@ -394,7 +405,7 @@ function joinNonEmpty(parts: Array<string | undefined>, separator = " | "): stri
   return parts.map((part) => (part || "").trim()).filter(Boolean).join(separator);
 }
 
-function cleanSummaryBulletLine(line: string): string {
+function cleanSummaryLine(line: string): string {
   return line
     .trim()
     .replace(/^[-*\u2022\d.)\s]+/, "")
@@ -407,14 +418,10 @@ function normalizeSummaryOutput(summary: string): string {
 
   const lines = cleaned
     .split(/\r?\n+/)
-    .map(cleanSummaryBulletLine)
+    .map(cleanSummaryLine)
     .filter(Boolean);
 
-  if (lines.length >= 2) {
-    return lines.slice(0, 3).map((line) => `- ${line}`).join("\n");
-  }
-
-  return cleaned;
+  return lines.join(" ") || cleanSummaryLine(cleaned);
 }
 
 function parseSummaryResponse(raw: string): string {
@@ -430,7 +437,7 @@ function parseSummaryResponse(raw: string): string {
       return normalizeSummaryOutput(data.bullets.filter((item) => typeof item === "string").join("\n"));
     }
   } catch {
-    // Admins can intentionally request plain bullet text instead of JSON.
+    // Admins can intentionally request plain summary text instead of JSON.
   }
   return normalizeSummaryOutput(raw);
 }

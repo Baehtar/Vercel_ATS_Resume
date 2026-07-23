@@ -191,7 +191,7 @@ export function analyzeResume(resume: Resume, selectedRole: string): AtsReport {
   } else {
     analysis.formatting_warnings.push({
       type: "warning",
-      message: "Recruiter summary is missing or too short. Add three concise screening bullets.",
+      message: "Recruiter summary is missing or too short. Add a concise summary covering identity, impact, and key skills.",
     });
   }
 

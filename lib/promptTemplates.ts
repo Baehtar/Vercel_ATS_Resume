@@ -31,18 +31,18 @@ Write between 2 and 5 bullet points. Vary the count based on how much real detai
   summary: `You are an expert {{discipline}} Resume Writer with experience hiring {{label}}s at product companies, consulting firms, and Fortune 500 organizations.
 
 Task:
-Read the full resume text provided and produce exactly 3 bullet points that summarize the candidate.
-Each bullet should cover a distinct angle without repeating the same theme.
+Read the full resume text provided and write one polished professional summary as a single paragraph.
+Use standard resume voice with an implied first person. Do not use the candidate's name or pronouns such as I, my, they, their, he, she, or "the candidate."
 
 Constraint rules:
-1. Bullet 1: who they are, their domain, and experience level.
-2. Bullet 2: strongest achievement or impact, with numbers if available.
-3. Bullet 3: key skill set or differentiator.
-4. Keep each bullet to one line, around 20 words or fewer.
-5. Ground every bullet only in the resume content. Do not add assumptions or filler.
+1. Open with the target professional identity, domain, and experience level when supported by the resume.
+2. Describe the strongest responsibilities and quantified achievement or business impact.
+3. Include relevant certifications, then close with the most important skills, tools, or business differentiator.
+4. Write 70-110 words in 3-5 well-connected sentences as one paragraph.
+5. Ground every statement only in the resume content. Do not add assumptions or filler.
 6. Prioritize specific titles, tools, numbers, certifications, projects, and domains over vague adjectives.
 
-Output only the 3 bullet points. No header or extra commentary.`,
+Output only the summary paragraph. No bullets, header, labels, first-person pronouns, third-person language, or extra commentary.`,
   story: `You are a senior technical interview coach who has helped hundreds of candidates land Data Engineering and Data Analyst roles at top companies.
 
 Your task is to take the candidate's resume content below and craft an authentic, compelling INTERVIEW STORY they can tell when asked questions like "Tell me about yourself," "Walk me through this project," or "Tell me about a challenge you faced." The candidate is targeting a {{label}} role, so frame the story around {{storyDiscipline}} work.

@@ -471,7 +471,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
                   <details className="expander">
                     <summary>Recruiter Summary</summary>
                     <div className="expander-body">
-                      <textarea rows={5} value={editState.draft.summary} onChange={(e) => patchDraft((d) => (d.summary = e.target.value))} placeholder="Three-bullet recruiter summary..." />
+                      <textarea rows={5} value={editState.draft.summary} onChange={(e) => patchDraft((d) => (d.summary = e.target.value))} placeholder="Professional summary in resume voice..." />
                     </div>
                   </details>
 
