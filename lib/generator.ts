@@ -167,11 +167,14 @@ Use standard resume voice with an implied first person. Do not use the candidate
 
 Constraint rules:
 1. Open with the target professional identity, domain, and experience level when supported by the resume.
-2. Describe the strongest responsibilities and quantified achievement or business impact.
-3. Include relevant certifications, then close with the most important skills, tools, or business differentiator.
-4. Write 70-110 words in 3-5 well-connected sentences as one paragraph.
-5. Ground every statement only in the resume content. Do not add assumptions or filler.
-6. Prioritize specific titles, tools, numbers, certifications, projects, and domains over vague adjectives.
+2. Establish the candidate's specialization and business domain, then include technical scale such as data volume, users, systems, or workload when available.
+3. Highlight the strongest end-to-end responsibilities, core platforms and tools, and relevant architecture, modeling, orchestration, or loading techniques.
+4. Connect the strongest quantified achievement to a production, operational, or business outcome.
+5. Include relevant certifications and close with the most important technical or business differentiator.
+6. Write 70-110 words in 3-5 well-connected sentences as one paragraph.
+7. Ground every statement only in the resume content. Do not add assumptions, tools, metrics, domains, or filler.
+8. Deduplicate repeated source content and mention each fact only once.
+9. Prioritize specific titles, tools, numbers, certifications, projects, and domains over vague adjectives.
 
 Output only the summary paragraph. No bullets, header, labels, first-person pronouns, third-person language, or extra commentary.`;
 }

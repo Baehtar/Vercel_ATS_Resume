@@ -3,6 +3,7 @@
 // Students never hit JSearch directly — zero RapidAPI quota consumed here.
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sortJobsByNewest } from "@/lib/jobSort";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export async function GET() {
       .from("job_listings")
       .select("*")
       .order("fetched_at", { ascending: false })
-      .limit(50);
+      .limit(200);
 
     if (error) throw new Error(error.message);
 
@@ -30,7 +31,11 @@ export async function GET() {
       return NextResponse.json({ jobs: [], error: null, source: "empty" });
     }
 
-    return NextResponse.json({ jobs: data, error: null, source: "supabase" });
+    return NextResponse.json({
+      jobs: sortJobsByNewest(data).slice(0, 50),
+      error: null,
+      source: "supabase",
+    });
   } catch (e) {
     return NextResponse.json({
       jobs: [],

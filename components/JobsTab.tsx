@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { MOCK_JOB_LISTINGS } from "@/lib/jobDb";
+import { sortJobsByNewest } from "@/lib/jobSort";
 
 interface Job {
   id: string;
@@ -17,6 +18,8 @@ interface Job {
   apply_url: string;
   description: string;
   tags: string[];
+  posted_at?: string;
+  fetched_at?: string;
 }
 
 function JobCard({ job }: { job: Job }) {
@@ -67,21 +70,6 @@ function JobCard({ job }: { job: Job }) {
   );
 }
 
-interface Job {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  role_type?: string;
-  experience: string;
-  posted: string;
-  salary_range: string;
-  source: string;
-  apply_url: string;
-  description: string;
-  tags: string[];
-}
-
 export default function JobsTab() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,10 +85,17 @@ export default function JobsTab() {
         const data = await res.json();
 
         if (data.jobs && data.jobs.length > 0) {
-          setJobs(data.jobs);
+          const sortedJobs = sortJobsByNewest(data.jobs as Job[]);
+          setJobs(sortedJobs);
           setUsingMock(false);
           // Show when the most recent listing was fetched
-          const latest = data.jobs[0]?.fetched_at;
+          const latest = sortedJobs.reduce<string | null>((mostRecent, job) => {
+            if (!job.fetched_at) return mostRecent;
+            if (!mostRecent) return job.fetched_at;
+            return Date.parse(job.fetched_at) > Date.parse(mostRecent)
+              ? job.fetched_at
+              : mostRecent;
+          }, null);
           if (latest) {
             setLastRefreshed(
               new Date(latest).toLocaleDateString("en-IN", {
@@ -111,19 +106,19 @@ export default function JobsTab() {
         } else {
           // Fall back to mock data if Supabase is empty or not yet seeded
           setJobs(
-            MOCK_JOB_LISTINGS.map((j) => ({
+            sortJobsByNewest(MOCK_JOB_LISTINGS.map((j) => ({
               ...j,
               id: String(j.id),
               role_type: j.role_type,
-            }))
+            })))
           );
           setUsingMock(true);
           if (data.error) setError(data.error);
         }
       } catch (e) {
-        setJobs(
+        setJobs(sortJobsByNewest(
           MOCK_JOB_LISTINGS.map((j) => ({ ...j, id: String(j.id), role_type: j.role_type }))
-        );
+        ));
         setUsingMock(true);
         setError(e instanceof Error ? e.message : String(e));
       } finally {
