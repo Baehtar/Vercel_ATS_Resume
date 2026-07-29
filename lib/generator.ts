@@ -3,6 +3,7 @@
 // key is read from server-only env vars and never exposed to the browser.
 import OpenAI from "openai";
 import { getConfiguredPrompt } from "./promptConfig";
+import { DEFAULT_PROMPT_TEMPLATES, renderPromptTemplate } from "./promptTemplates";
 
 function getOpenAIKey(): string | undefined {
   return process.env.OPENAI_API_KEY;
@@ -183,7 +184,11 @@ Output only the summary paragraph. No bullets, header, labels, first-person pron
 export const BASE_PROMPT = buildBasePrompt("data_engineer");
 export const SUMMARY_PROMPT = buildSummaryPrompt("data_engineer");
 
-async function callOpenAI(promptText: string, systemPrompt?: string): Promise<string> {
+async function callOpenAI(
+  promptText: string,
+  systemPrompt?: string,
+  options: { json?: boolean; maxTokens?: number } = {}
+): Promise<string> {
   const apiKey = getOpenAIKey();
   if (!apiKey) {
     throw new Error("API key not found. Set OPENAI_API_KEY in your environment.");
@@ -193,25 +198,75 @@ async function callOpenAI(promptText: string, systemPrompt?: string): Promise<st
     baseURL: getOpenAIBase() || "https://api.openai.com/v1",
   });
 
-  const resp = await client.chat.completions.create({
+  const request = {
     model: getOpenAIModel(),
     messages: [
-      { role: "system", content: systemPrompt || BASE_PROMPT },
-      { role: "user", content: promptText },
+      { role: "system" as const, content: systemPrompt || BASE_PROMPT },
+      { role: "user" as const, content: promptText },
     ],
-    max_tokens: 1500,
+    max_tokens: options.maxTokens || 1500,
     temperature: 0.4,
-  });
-  return resp.choices[0]?.message?.content || "";
+    ...(options.json ? { response_format: { type: "json_object" as const } } : {}),
+  };
+
+  let resp;
+  try {
+    resp = await client.chat.completions.create(request);
+  } catch (error) {
+    // Keep compatibility with OpenAI-compatible providers that do not implement JSON mode.
+    const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    const jsonModeUnsupported = message.includes("response_format") ||
+      message.includes("json_object") || message.includes("unsupported");
+    if (!options.json || !jsonModeUnsupported) throw error;
+    const { response_format: _responseFormat, ...withoutJsonMode } = request;
+    resp = await client.chat.completions.create(withoutJsonMode);
+  }
+
+  const choice = resp.choices[0];
+  if (choice?.finish_reason === "length") {
+    throw new Error("OpenAI response was truncated. Increase the completion token limit or shorten the prompt output.");
+  }
+  const content = choice?.message?.content || "";
+  if (!content.trim()) throw new Error("OpenAI returned an empty response");
+  return content;
 }
 
 function parseOpenAIJson(raw: string): Record<string, unknown> {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start === -1 || end === -1 || start >= end) {
-    throw new Error("OpenAI response did not return valid JSON");
+  const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try {
+    return JSON.parse(cleaned) as Record<string, unknown>;
+  } catch {
+    // JSON mode normally makes this unnecessary, but this also handles older saved prompts
+    // that still cause a short preamble or code fence to be returned.
+    const start = cleaned.indexOf("{");
+    if (start === -1) throw new Error("OpenAI response did not return valid JSON");
+
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (let i = start; i < cleaned.length; i += 1) {
+      const char = cleaned[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === "\\") escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') inString = true;
+      else if (char === "{") depth += 1;
+      else if (char === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          try {
+            return JSON.parse(cleaned.slice(start, i + 1)) as Record<string, unknown>;
+          } catch {
+            break;
+          }
+        }
+      }
+    }
+    throw new Error("OpenAI response did not return complete JSON");
   }
-  return JSON.parse(raw.slice(start, end + 1));
 }
 
 interface FallbackInfo {
@@ -348,7 +403,7 @@ export async function generateEntryBullets(entry: EntryInfo) {
       discipline: p.discipline, label: p.label, adjective: p.adjective,
       storyDiscipline: p.storyDiscipline, focusTech: p.focusTech,
     });
-    const raw = await callOpenAI(promptText, systemPrompt);
+    const raw = await callOpenAI(promptText, systemPrompt, { json: true });
     const data = parseOpenAIJson(raw);
     let bullets = (data.bullets as string[]) || [];
     bullets = bullets.filter((b) => b && typeof b === "string").map((b) => b.trim());
@@ -524,24 +579,18 @@ export async function generateProfessionalSummary(input: SummaryInput) {
 
 export function buildStoryPrompt(targetRole?: string): string {
   const p = getRoleProfile(targetRole);
-  return `You are a senior technical interview coach who has helped hundreds of candidates land Data Engineering and Data Analyst roles at top companies.
-
-Your task is to take the candidate's resume content below and craft an authentic, compelling INTERVIEW STORY they can tell when asked questions like "Tell me about yourself," "Walk me through this project," or "Tell me about a challenge you faced." The candidate is targeting a ${p.label} role, so frame the story around ${p.storyDiscipline} work.
-
-### Rules
-1. Do NOT just restate the resume bullets. Build a narrative with a clear beginning, challenge, action, and outcome (STAR-style, but conversational, not robotic).
-2. Make it sound like something a real person would say out loud in an interview, not a written document.
-3. Highlight a specific moment of ownership, problem-solving, or initiative that makes the candidate memorable.
-4. Include one believable technical or business obstacle they overcame and how they overcame it.
-5. Keep it grounded in the candidate's actual experience. Do not invent achievements that contradict the resume.
-6. End with a brief reflection on what they learned or how it shaped their approach to ${p.storyDiscipline} work.
-7. Write in first person, as if the candidate is speaking.
+  return renderPromptTemplate(DEFAULT_PROMPT_TEMPLATES.story, {
+    label: p.label,
+    storyDiscipline: p.storyDiscipline,
+  });
+  /*
 8. Keep it to 150-220 words — long enough to be substantial, short enough to say in under 90 seconds.
 9. Avoid generic phrases like "I'm passionate about data" or "I love solving problems." Make it specific and concrete.
 10. If multiple experience entries exist, choose the most compelling/relevant one to build the story around, but you may briefly reference others for context.
 
 Return ONLY valid JSON with this structure:
 {"story_title": "A short 4-6 word title for this story (e.g. 'The Pipeline That Almost Failed')","story": "The full first-person interview story (150-220 words)","key_talking_points": ["point 1", "point 2", "point 3"],"follow_up_tip": "One sentence tip on how to handle a likely follow-up question about this story"}`;
+  */
 }
 
 // Backward-compatible default constant (Data Engineer flavour).
@@ -562,8 +611,90 @@ export interface StoryOutput {
   story: string;
   key_talking_points: string[];
   follow_up_tip: string;
+  resume_understanding: string;
+  main_interview_introduction: string;
+  career_storytelling: string;
+  project_or_experience_story: ProjectOrExperienceStory;
+  difficult_areas_to_prepare: DifficultArea[];
+  easy_to_remember_version: string;
+  speaking_guidance: string[];
   api_used: boolean;
   api_error: string | null;
+}
+
+export interface ProjectOrExperienceStory {
+  business_situation: string;
+  candidate_responsibility: string;
+  tools_and_approach: string;
+  challenges_handled: string;
+  final_outcome_or_learning: string;
+}
+
+export interface DifficultArea {
+  area: string;
+  interview_safe_explanation: string;
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean)
+    : [];
+}
+
+function normalizeProjectStory(value: unknown): ProjectOrExperienceStory {
+  const project = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  return {
+    business_situation: asString(project.business_situation),
+    candidate_responsibility: asString(project.candidate_responsibility),
+    tools_and_approach: asString(project.tools_and_approach),
+    challenges_handled: asString(project.challenges_handled),
+    final_outcome_or_learning: asString(project.final_outcome_or_learning),
+  };
+}
+
+function normalizeDifficultAreas(value: unknown): DifficultArea[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const area = item as Record<string, unknown>;
+    const normalized = {
+      area: asString(area.area),
+      interview_safe_explanation: asString(area.interview_safe_explanation),
+    };
+    return normalized.area || normalized.interview_safe_explanation ? [normalized] : [];
+  });
+}
+
+function normalizeStoryData(data: Record<string, unknown>): Omit<StoryOutput, "api_used" | "api_error"> | null {
+  const mainIntroduction = asString(data.main_interview_introduction) || asString(data.story);
+  if (!mainIntroduction) return null;
+
+  const difficultAreas = normalizeDifficultAreas(data.difficult_areas_to_prepare);
+  const talkingPoints = asStringArray(data.key_talking_points);
+  const projectStory = normalizeProjectStory(data.project_or_experience_story);
+  const derivedTalkingPoints = [
+    asString(data.resume_understanding),
+    asString(data.career_storytelling),
+    projectStory.final_outcome_or_learning,
+  ].filter(Boolean).slice(0, 3);
+
+  return {
+    story_title: asString(data.story_title) || "Tell Me About Yourself",
+    story: mainIntroduction,
+    key_talking_points: talkingPoints.length ? talkingPoints : derivedTalkingPoints,
+    follow_up_tip: asString(data.follow_up_tip) || difficultAreas[0]?.interview_safe_explanation || "Be ready to explain the project decisions and outcomes in more detail.",
+    resume_understanding: asString(data.resume_understanding),
+    main_interview_introduction: mainIntroduction,
+    career_storytelling: asString(data.career_storytelling),
+    project_or_experience_story: projectStory,
+    difficult_areas_to_prepare: difficultAreas,
+    easy_to_remember_version: asString(data.easy_to_remember_version),
+    speaking_guidance: asStringArray(data.speaking_guidance),
+  };
 }
 
 function fallbackStory(input: StoryInput): StoryOutput {
@@ -577,6 +708,19 @@ function fallbackStory(input: StoryInput): StoryOutput {
     story: fb.body(name, role),
     key_talking_points: fb.talkingPoints,
     follow_up_tip: fb.followUp,
+    resume_understanding: "",
+    main_interview_introduction: fb.body(name, role),
+    career_storytelling: "",
+    project_or_experience_story: {
+      business_situation: "",
+      candidate_responsibility: "",
+      tools_and_approach: "",
+      challenges_handled: "",
+      final_outcome_or_learning: "",
+    },
+    difficult_areas_to_prepare: [],
+    easy_to_remember_version: fb.body(name, role),
+    speaking_guidance: [],
     api_used: false,
     api_error: "OpenAI unavailable — showing illustrative story. Generate again once API key is set.",
   };
@@ -599,14 +743,12 @@ export async function generateInterviewStory(input: StoryInput): Promise<StoryOu
     const systemPrompt = await getConfiguredPrompt("story", buildStoryPrompt(input.target_role), {
       label: p.label, storyDiscipline: p.storyDiscipline,
     });
-    const raw = await callOpenAI(promptText, systemPrompt);
-    const data = parseOpenAIJson(raw) as Partial<StoryOutput>;
-    if (data.story && data.story_title) {
+    const raw = await callOpenAI(promptText, systemPrompt, { json: true, maxTokens: 3000 });
+    const data = parseOpenAIJson(raw);
+    const normalized = normalizeStoryData(data);
+    if (normalized) {
       return {
-        story_title: (data.story_title as string) || "",
-        story: (data.story as string) || "",
-        key_talking_points: (data.key_talking_points as string[]) || [],
-        follow_up_tip: (data.follow_up_tip as string) || "",
+        ...normalized,
         api_used: true,
         api_error: null,
       };
@@ -652,7 +794,7 @@ export async function generateExperience(info: ExperienceInput) {
       discipline: p.discipline, label: p.label, adjective: p.adjective,
       storyDiscipline: p.storyDiscipline, focusTech: p.focusTech,
     });
-    const raw = await callOpenAI(promptText, systemPrompt);
+    const raw = await callOpenAI(promptText, systemPrompt, { json: true });
     const data = parseOpenAIJson(raw);
     let bullets = (data.bullets as string[]) || [];
     bullets = bullets.filter((b) => b && typeof b === "string").map((b) => b.trim());

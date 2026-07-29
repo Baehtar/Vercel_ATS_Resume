@@ -17,6 +17,22 @@ interface StoryResult {
   story: string;
   key_talking_points: string[];
   follow_up_tip: string;
+  resume_understanding?: string;
+  main_interview_introduction?: string;
+  career_storytelling?: string;
+  project_or_experience_story?: {
+    business_situation: string;
+    candidate_responsibility: string;
+    tools_and_approach: string;
+    challenges_handled: string;
+    final_outcome_or_learning: string;
+  };
+  difficult_areas_to_prepare?: Array<{
+    area: string;
+    interview_safe_explanation: string;
+  }>;
+  easy_to_remember_version?: string;
+  speaking_guidance?: string[];
   api_used: boolean;
   api_error: string | null;
 }
@@ -61,6 +77,16 @@ export default function InterviewStoryCard({ resume, targetRole }: Props) {
   const hasEnoughData =
     (resume.experience || []).some((e) => e.company || e.role) ||
     (resume.projects || []).some((p) => p.name);
+
+  const projectSections = result?.project_or_experience_story
+    ? [
+        ["Business Situation", result.project_or_experience_story.business_situation],
+        ["Candidate Responsibility", result.project_or_experience_story.candidate_responsibility],
+        ["Tools and Approach", result.project_or_experience_story.tools_and_approach],
+        ["Challenges Handled", result.project_or_experience_story.challenges_handled],
+        ["Outcome or Learning", result.project_or_experience_story.final_outcome_or_learning],
+      ].filter(([, value]) => value)
+    : [];
 
   const generate = async () => {
     setBusy(true);
@@ -197,6 +223,77 @@ export default function InterviewStoryCard({ resume, targetRole }: Props) {
           >
             {result.story}
           </div>
+
+          {(result.resume_understanding || result.career_storytelling) && (
+            <div style={{ display: "grid", gap: 14, marginTop: 16, gridTemplateColumns: "1fr 1fr" }}>
+              {result.resume_understanding && (
+                <div style={{ background: "var(--panel-2)", borderRadius: 10, padding: "14px 16px" }}>
+                  <p style={{ margin: "0 0 8px", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+                    Resume Understanding
+                  </p>
+                  <p style={{ margin: 0, fontSize: "0.9rem", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{result.resume_understanding}</p>
+                </div>
+              )}
+              {result.career_storytelling && (
+                <div style={{ background: "var(--panel-2)", borderRadius: 10, padding: "14px 16px" }}>
+                  <p style={{ margin: "0 0 8px", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+                    Career Story
+                  </p>
+                  <p style={{ margin: 0, fontSize: "0.9rem", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{result.career_storytelling}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {projectSections.length > 0 && (
+            <div style={{ background: "var(--panel-2)", borderRadius: 10, padding: "14px 16px", marginTop: 16 }}>
+              <p style={{ margin: "0 0 10px", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+                Project or Experience Story
+              </p>
+              <div style={{ display: "grid", gap: 10 }}>
+                {projectSections.map(([label, value]) => (
+                  <div key={label}>
+                    <strong style={{ display: "block", fontSize: "0.82rem", color: "var(--premium-white)", marginBottom: 2 }}>{label}</strong>
+                    <span style={{ fontSize: "0.9rem", lineHeight: 1.55 }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {result.difficult_areas_to_prepare && result.difficult_areas_to_prepare.length > 0 && (
+            <div style={{ background: "var(--panel-2)", borderRadius: 10, padding: "14px 16px", marginTop: 16 }}>
+              <p style={{ margin: "0 0 10px", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+                Difficult Areas to Prepare
+              </p>
+              {result.difficult_areas_to_prepare.map((item, i) => (
+                <div key={`${item.area}-${i}`} style={{ marginBottom: i === result.difficult_areas_to_prepare!.length - 1 ? 0 : 10 }}>
+                  <strong style={{ display: "block", fontSize: "0.88rem", color: "var(--premium-white)" }}>{item.area}</strong>
+                  <span style={{ fontSize: "0.88rem", lineHeight: 1.55 }}>{item.interview_safe_explanation}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {result.easy_to_remember_version && (
+            <div style={{ background: "var(--panel-2)", borderRadius: 10, padding: "14px 16px", marginTop: 16 }}>
+              <p style={{ margin: "0 0 8px", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+                Easy-to-Remember Version
+              </p>
+              <p style={{ margin: 0, fontSize: "0.9rem", lineHeight: 1.6 }}>{result.easy_to_remember_version}</p>
+            </div>
+          )}
+
+          {result.speaking_guidance && result.speaking_guidance.length > 0 && (
+            <div style={{ background: "var(--panel-2)", borderRadius: 10, padding: "14px 16px", marginTop: 16 }}>
+              <p style={{ margin: "0 0 8px", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+                Speaking Guidance
+              </p>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {result.speaking_guidance.map((tip, i) => <li key={i} style={{ fontSize: "0.88rem", marginBottom: 5 }}>{tip}</li>)}
+              </ul>
+            </div>
+          )}
 
           <div
             style={{
