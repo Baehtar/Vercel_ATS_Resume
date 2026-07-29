@@ -2,6 +2,24 @@
 // Ported from resume_templates.py
 import type { Resume, TemplateId } from "./types";
 
+function _resumeDateValue(value: string | undefined, preferEnd = false): number {
+  const raw = (value || "").trim().toLowerCase();
+  if (!raw) return 0;
+  if (raw === "present" || raw === "current" || raw === "ongoing") return Number.MAX_SAFE_INTEGER;
+
+  const match = raw.match(/\b(\d{4})(?:[-/](\d{1,2}))?(?:[-/](\d{1,2}))?\b/);
+  if (!match) return 0;
+
+  const year = Number(match[1]);
+  const month = match[2] ? Number(match[2]) : preferEnd ? 12 : 1;
+  const day = match[3] ? Number(match[3]) : preferEnd ? 31 : 1;
+  return Date.UTC(year, Math.max(0, month - 1), day);
+}
+
+function _experienceSortValue(exp: Resume["experience"][number]): number {
+  return _resumeDateValue(exp.endDate, true) || _resumeDateValue(exp.startDate, false);
+}
+
 /** HTML-escape a resume field value to prevent XSS in the preview iframe. */
 function _safe(value: unknown): string {
   if (value === null || value === undefined || value === "") return "";
@@ -305,8 +323,10 @@ interface LayoutConfig {
 export function generateResumeHtml(data: Resume, templateId: string): string {
   const personal = data.personal || ({} as Resume["personal"]);
   const summary = data.summary || "";
-  const experience = data.experience || [];
-  const education = data.education || [];
+  const experience = [...(data.experience || [])].sort(
+    (a, b) => _experienceSortValue(b) - _experienceSortValue(a)
+  );
+  const education = (data.education || []).slice(0, 2);
   const projects = data.projects || [];
   const skills = data.skills || [];
   const certifications = data.certifications || [];
