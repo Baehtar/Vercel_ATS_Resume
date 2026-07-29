@@ -593,6 +593,17 @@ Return ONLY valid JSON with this structure:
   */
 }
 
+export function buildInterviewPrepPrompt(targetRole?: string): string {
+  const p = getRoleProfile(targetRole);
+  return renderPromptTemplate(DEFAULT_PROMPT_TEMPLATES.interview_prep, {
+    discipline: p.discipline,
+    label: p.label,
+    adjective: p.adjective,
+    storyDiscipline: p.storyDiscipline,
+    focusTech: p.focusTech,
+  });
+}
+
 // Backward-compatible default constant (Data Engineer flavour).
 export const STORY_PROMPT = buildStoryPrompt("data_engineer");
 
@@ -604,6 +615,114 @@ export interface StoryInput {
   experience_text: string;
   projects_text: string;
   skills_text: string;
+}
+
+export interface InterviewPrepInput extends StoryInput {
+  education_text?: string;
+  certifications_text?: string;
+}
+
+export interface InterviewPrepGuide {
+  risk_analysis: PrepRiskAnalysis;
+  introductions: PrepIntroductions;
+  most_important_questions: ImportantPrepQuestion[];
+  line_by_line_questions: LineByLinePrepQuestion[];
+  project_deep_dives: ProjectDeepDive[];
+  technical_skill_questions: SkillPrepSection[];
+  workplace_scenarios: ScenarioPrepItem[];
+  behavioral_hr_questions: SimpleQuestionAnswer[];
+  rapid_fire: SimpleQuestionAnswer[];
+  cross_questioning_round: CrossQuestionItem[];
+  missing_information: MissingInfoItem[];
+  final_preparation_sheet: FinalPreparationSheet;
+  api_used: boolean;
+  api_error: string | null;
+}
+
+export interface PrepRiskAnalysis {
+  strongest_resume_areas: string[];
+  weakest_or_least_defendable_areas: string[];
+  claims_likely_to_be_challenged: string[];
+  missing_details_to_prepare: string[];
+}
+
+export interface PrepIntroductions {
+  thirty_second: string;
+  sixty_to_ninety_second: string;
+  walk_me_through_resume: string;
+}
+
+export interface ImportantPrepQuestion {
+  question: string;
+  why_interviewer_may_ask: string;
+  resume_connection: string;
+  best_interview_answer: string;
+  likely_follow_up_question: string;
+  suggested_follow_up_answer: string;
+  mistake_to_avoid: string;
+}
+
+export interface LineByLinePrepQuestion {
+  resume_statement: string;
+  interview_question: string;
+  practical_answer: string;
+  cross_question: string;
+  cross_question_answer: string;
+}
+
+export interface ProjectDeepDive {
+  project_name: string;
+  overview: string;
+  questions: ProjectPrepQuestion[];
+}
+
+export interface ProjectPrepQuestion {
+  question: string;
+  answer: string;
+  follow_up_question: string;
+  follow_up_answer: string;
+}
+
+export interface SkillPrepSection {
+  skill: string;
+  questions: SkillPrepQuestion[];
+}
+
+export interface SkillPrepQuestion {
+  level: string;
+  question: string;
+  answer: string;
+  exercise: string;
+}
+
+export interface ScenarioPrepItem {
+  scenario: string;
+  answer: string;
+}
+
+export interface SimpleQuestionAnswer {
+  question: string;
+  answer: string;
+}
+
+export interface CrossQuestionItem {
+  question: string;
+  safe_response: string;
+}
+
+export interface MissingInfoItem {
+  item: string;
+  question: string;
+}
+
+export interface FinalPreparationSheet {
+  top_answers_to_memorise: string[];
+  technical_concepts_to_revise: string[];
+  project_stories_to_prepare: string[];
+  weak_areas_to_handle: string[];
+  interviewer_follow_up_questions: string[];
+  one_day_revision_plan: string[];
+  final_confidence_checklist: string[];
 }
 
 export interface StoryOutput {
@@ -643,6 +762,186 @@ function asStringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean)
     : [];
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function normalizeArray<T>(value: unknown, mapper: (item: Record<string, unknown>) => T | null): T[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const record = asRecord(item);
+    if (!Object.keys(record).length) return [];
+    const normalized = mapper(record);
+    return normalized ? [normalized] : [];
+  });
+}
+
+function normalizeSimpleQuestionAnswers(value: unknown): SimpleQuestionAnswer[] {
+  return normalizeArray(value, (item) => {
+    const normalized = {
+      question: asString(item.question),
+      answer: asString(item.answer),
+    };
+    return normalized.question || normalized.answer ? normalized : null;
+  });
+}
+
+function normalizeRiskAnalysis(value: unknown): PrepRiskAnalysis {
+  const risk = asRecord(value);
+  return {
+    strongest_resume_areas: asStringArray(risk.strongest_resume_areas),
+    weakest_or_least_defendable_areas: asStringArray(risk.weakest_or_least_defendable_areas),
+    claims_likely_to_be_challenged: asStringArray(risk.claims_likely_to_be_challenged),
+    missing_details_to_prepare: asStringArray(risk.missing_details_to_prepare),
+  };
+}
+
+function normalizePrepIntroductions(value: unknown): PrepIntroductions {
+  const intro = asRecord(value);
+  return {
+    thirty_second: asString(intro.thirty_second),
+    sixty_to_ninety_second: asString(intro.sixty_to_ninety_second),
+    walk_me_through_resume: asString(intro.walk_me_through_resume),
+  };
+}
+
+function normalizeImportantQuestions(value: unknown): ImportantPrepQuestion[] {
+  return normalizeArray(value, (item) => {
+    const normalized = {
+      question: asString(item.question),
+      why_interviewer_may_ask: asString(item.why_interviewer_may_ask),
+      resume_connection: asString(item.resume_connection),
+      best_interview_answer: asString(item.best_interview_answer),
+      likely_follow_up_question: asString(item.likely_follow_up_question),
+      suggested_follow_up_answer: asString(item.suggested_follow_up_answer),
+      mistake_to_avoid: asString(item.mistake_to_avoid),
+    };
+    return normalized.question || normalized.best_interview_answer ? normalized : null;
+  });
+}
+
+function normalizeLineByLineQuestions(value: unknown): LineByLinePrepQuestion[] {
+  return normalizeArray(value, (item) => {
+    const normalized = {
+      resume_statement: asString(item.resume_statement),
+      interview_question: asString(item.interview_question),
+      practical_answer: asString(item.practical_answer),
+      cross_question: asString(item.cross_question),
+      cross_question_answer: asString(item.cross_question_answer),
+    };
+    return normalized.resume_statement || normalized.interview_question ? normalized : null;
+  });
+}
+
+function normalizeProjectDeepDives(value: unknown): ProjectDeepDive[] {
+  return normalizeArray(value, (item) => {
+    const questions = normalizeArray(item.questions, (question) => {
+      const normalized = {
+        question: asString(question.question),
+        answer: asString(question.answer),
+        follow_up_question: asString(question.follow_up_question),
+        follow_up_answer: asString(question.follow_up_answer),
+      };
+      return normalized.question || normalized.answer ? normalized : null;
+    });
+    const normalized = {
+      project_name: asString(item.project_name),
+      overview: asString(item.overview),
+      questions,
+    };
+    return normalized.project_name || normalized.overview || normalized.questions.length ? normalized : null;
+  });
+}
+
+function normalizeSkillQuestions(value: unknown): SkillPrepSection[] {
+  return normalizeArray(value, (item) => {
+    const questions = normalizeArray(item.questions, (question) => {
+      const normalized = {
+        level: asString(question.level),
+        question: asString(question.question),
+        answer: asString(question.answer),
+        exercise: asString(question.exercise),
+      };
+      return normalized.question || normalized.answer ? normalized : null;
+    });
+    const normalized = {
+      skill: asString(item.skill),
+      questions,
+    };
+    return normalized.skill || normalized.questions.length ? normalized : null;
+  });
+}
+
+function normalizeScenarios(value: unknown): ScenarioPrepItem[] {
+  return normalizeArray(value, (item) => {
+    const normalized = {
+      scenario: asString(item.scenario),
+      answer: asString(item.answer),
+    };
+    return normalized.scenario || normalized.answer ? normalized : null;
+  });
+}
+
+function normalizeCrossQuestions(value: unknown): CrossQuestionItem[] {
+  return normalizeArray(value, (item) => {
+    const normalized = {
+      question: asString(item.question),
+      safe_response: asString(item.safe_response),
+    };
+    return normalized.question || normalized.safe_response ? normalized : null;
+  });
+}
+
+function normalizeMissingInfo(value: unknown): MissingInfoItem[] {
+  return normalizeArray(value, (item) => {
+    const normalized = {
+      item: asString(item.item),
+      question: asString(item.question),
+    };
+    return normalized.item || normalized.question ? normalized : null;
+  });
+}
+
+function normalizeFinalPrepSheet(value: unknown): FinalPreparationSheet {
+  const sheet = asRecord(value);
+  return {
+    top_answers_to_memorise: asStringArray(sheet.top_answers_to_memorise),
+    technical_concepts_to_revise: asStringArray(sheet.technical_concepts_to_revise),
+    project_stories_to_prepare: asStringArray(sheet.project_stories_to_prepare),
+    weak_areas_to_handle: asStringArray(sheet.weak_areas_to_handle),
+    interviewer_follow_up_questions: asStringArray(sheet.interviewer_follow_up_questions),
+    one_day_revision_plan: asStringArray(sheet.one_day_revision_plan),
+    final_confidence_checklist: asStringArray(sheet.final_confidence_checklist),
+  };
+}
+
+function normalizeInterviewPrepData(data: Record<string, unknown>): Omit<InterviewPrepGuide, "api_used" | "api_error"> | null {
+  const guide = {
+    risk_analysis: normalizeRiskAnalysis(data.risk_analysis),
+    introductions: normalizePrepIntroductions(data.introductions),
+    most_important_questions: normalizeImportantQuestions(data.most_important_questions),
+    line_by_line_questions: normalizeLineByLineQuestions(data.line_by_line_questions),
+    project_deep_dives: normalizeProjectDeepDives(data.project_deep_dives),
+    technical_skill_questions: normalizeSkillQuestions(data.technical_skill_questions),
+    workplace_scenarios: normalizeScenarios(data.workplace_scenarios),
+    behavioral_hr_questions: normalizeSimpleQuestionAnswers(data.behavioral_hr_questions),
+    rapid_fire: normalizeSimpleQuestionAnswers(data.rapid_fire),
+    cross_questioning_round: normalizeCrossQuestions(data.cross_questioning_round),
+    missing_information: normalizeMissingInfo(data.missing_information),
+    final_preparation_sheet: normalizeFinalPrepSheet(data.final_preparation_sheet),
+  };
+
+  const hasContent =
+    guide.introductions.thirty_second ||
+    guide.introductions.sixty_to_ninety_second ||
+    guide.most_important_questions.length ||
+    guide.line_by_line_questions.length ||
+    guide.technical_skill_questions.length ||
+    guide.rapid_fire.length;
+
+  return hasContent ? guide : null;
 }
 
 function normalizeProjectStory(value: unknown): ProjectOrExperienceStory {
@@ -760,6 +1059,155 @@ export async function generateInterviewStory(input: StoryInput): Promise<StoryOu
 
   const fb = fallbackStory(input);
   return { ...fb, api_error: apiError };
+}
+
+function fallbackInterviewPrep(input: InterviewPrepInput, apiError: string | null): InterviewPrepGuide {
+  const role = getRoleProfile(input.target_role).label;
+  const summary = input.summary || input.headline || `my background for a ${role} role`;
+  const experienceLines = input.experience_text
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/^[-*\u2022]\s*/, ""))
+    .filter(Boolean)
+    .slice(0, 6);
+  const skills = input.skills_text
+    .split(/[\n,|]/)
+    .map((skill) => skill.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  const mostImportant = [
+    {
+      question: "Tell me about yourself.",
+      why_interviewer_may_ask: "This checks whether the candidate can connect the resume to the target role.",
+      resume_connection: summary,
+      best_interview_answer: `I would introduce myself around ${summary}, then connect my experience, tools, and strongest project to the ${role} role.`,
+      likely_follow_up_question: "Which part of your experience is most relevant to this role?",
+      suggested_follow_up_answer: "I would choose the most recent or most technical project from my resume and explain my exact contribution, tools used, and result.",
+      mistake_to_avoid: "Do not give a generic answer that ignores the resume.",
+    },
+    ...experienceLines.slice(0, 4).map((line) => ({
+      question: `Can you explain this resume point: ${line}?`,
+      why_interviewer_may_ask: "The interviewer may test whether this claim is genuinely defendable.",
+      resume_connection: line,
+      best_interview_answer: `I would explain the business context, what I personally handled, the tools I used, and the measurable result or learning behind this point: ${line}`,
+      likely_follow_up_question: "What exactly did you personally do?",
+      suggested_follow_up_answer: "I would separate my individual work from the team contribution and mention the part I directly owned.",
+      mistake_to_avoid: "Do not overclaim ownership if it was team work.",
+    })),
+  ];
+
+  return {
+    risk_analysis: {
+      strongest_resume_areas: experienceLines.slice(0, 3),
+      weakest_or_least_defendable_areas: ["Any claim without a tool, metric, project context, or clear personal contribution should be prepared carefully."],
+      claims_likely_to_be_challenged: experienceLines.slice(0, 4),
+      missing_details_to_prepare: ["Approximate data volume, team size, project duration, failure handling, validation process, and measurable impact."],
+    },
+    introductions: {
+      thirty_second: `I am preparing for a ${role} role, and my resume shows ${summary}. My focus should be to explain my strongest experience clearly, connect it to the target role, and defend the tools and outcomes mentioned.`,
+      sixty_to_ninety_second: `I would start with my current profile, then briefly walk through the most relevant experience and projects from my resume. I would highlight the tools I used, the business problem I worked on, my personal contribution, and the measurable result where available. I would close by connecting that background to the ${role} opportunity.`,
+      walk_me_through_resume: "Start from the most recent role or project, explain the responsibilities in plain language, then move through earlier experience, education, skills, and certifications only where they support the target role.",
+    },
+    most_important_questions: mostImportant,
+    line_by_line_questions: experienceLines.map((line) => ({
+      resume_statement: line,
+      interview_question: `Walk me through this resume statement: ${line}`,
+      practical_answer: "Explain the context, task, tools used, personal contribution, validation, and impact.",
+      cross_question: "How can I know you actually worked on this?",
+      cross_question_answer: "Give a concrete implementation detail, a problem faced, and what you personally changed or delivered.",
+    })),
+    project_deep_dives: input.projects_text ? [{
+      project_name: "Resume project",
+      overview: input.projects_text,
+      questions: [{
+        question: "Explain the complete project workflow from start to finish.",
+        answer: "Describe the business problem, input data or requirements, tools, implementation steps, testing, output, and result.",
+        follow_up_question: "What was the hardest issue in this project?",
+        follow_up_answer: "Choose a real issue from the project and explain how it was diagnosed and handled.",
+      }],
+    }] : [],
+    technical_skill_questions: skills.map((skill) => ({
+      skill,
+      questions: [{
+        level: "Practical",
+        question: `How did you use ${skill} in your resume work?`,
+        answer: `I should connect ${skill} to a specific resume project, responsibility, or deliverable and avoid giving only a textbook definition.`,
+        exercise: `Prepare one small example or workflow involving ${skill}.`,
+      }],
+    })),
+    workplace_scenarios: [{
+      scenario: "An interviewer asks about an output mismatch or wrong result.",
+      answer: "I would explain how I checked the source data, transformations, assumptions, validation rules, and stakeholder definition before changing the final output.",
+    }],
+    behavioral_hr_questions: [{
+      question: "Why should we hire you?",
+      answer: `My answer should connect my resume evidence to the ${role} role and focus on practical contribution, learning ability, and defendable project experience.`,
+    }],
+    rapid_fire: skills.map((skill) => ({
+      question: `What is your practical experience with ${skill}?`,
+      answer: `I should answer using the resume context where I used ${skill}, not a generic definition.`,
+    })),
+    cross_questioning_round: [{
+      question: "What exactly did you personally do?",
+      safe_response: "I would name the specific part I owned, what the team handled, and one implementation detail that proves hands-on involvement.",
+    }],
+    missing_information: [{
+      item: "Project evidence",
+      question: "What was the data volume, team size, timeline, validation method, and measurable outcome for each major project?",
+    }],
+    final_preparation_sheet: {
+      top_answers_to_memorise: ["Tell me about yourself", "Walk me through your resume", "Explain your most important project", "What exactly did you personally do?"],
+      technical_concepts_to_revise: skills,
+      project_stories_to_prepare: input.projects_text ? ["Prepare the strongest project as a context, action, challenge, result story."] : [],
+      weak_areas_to_handle: ["Unsupported metrics, unclear ownership, unexplained gaps, and tools listed without project usage."],
+      interviewer_follow_up_questions: ["Why was this required?", "How did you implement it?", "How did you validate it?", "What failed?", "What would you improve?"],
+      one_day_revision_plan: ["Revise introductions", "Review each resume bullet", "Prepare one project deep dive", "Practice technical tools", "Prepare HR answers"],
+      final_confidence_checklist: ["Every claim has an example", "Every tool has a project connection", "Every metric can be explained", "Weak areas have honest answers"],
+    },
+    api_used: false,
+    api_error: apiError || "OpenAI unavailable. Showing a structured fallback guide.",
+  };
+}
+
+export async function generateInterviewPrep(input: InterviewPrepInput): Promise<InterviewPrepGuide> {
+  const promptText =
+    `### Candidate Resume Data\n` +
+    `Name: ${input.full_name}\n` +
+    `Target Role: ${input.target_role}\n` +
+    `Headline: ${input.headline}\n` +
+    `Recruiter Summary:\n${input.summary}\n\n` +
+    `Experience:\n${input.experience_text}\n\n` +
+    `Projects:\n${input.projects_text}\n\n` +
+    `Skills:\n${input.skills_text}\n\n` +
+    `Education:\n${input.education_text || ""}\n\n` +
+    `Certifications:\n${input.certifications_text || ""}\n`;
+
+  let apiError: string | null = null;
+  try {
+    const p = getRoleProfile(input.target_role);
+    const systemPrompt = await getConfiguredPrompt("interview_prep", buildInterviewPrepPrompt(input.target_role), {
+      discipline: p.discipline,
+      label: p.label,
+      adjective: p.adjective,
+      storyDiscipline: p.storyDiscipline,
+      focusTech: p.focusTech,
+    });
+    const raw = await callOpenAI(promptText, systemPrompt, { json: true, maxTokens: 6000 });
+    const data = parseOpenAIJson(raw);
+    const normalized = normalizeInterviewPrepData(data);
+    if (normalized) {
+      return {
+        ...normalized,
+        api_used: true,
+        api_error: null,
+      };
+    }
+    throw new Error("Incomplete JSON from OpenAI");
+  } catch (e) {
+    apiError = e instanceof Error ? e.message : String(e);
+  }
+
+  return fallbackInterviewPrep(input, apiError);
 }
 
 export interface ExperienceInput {

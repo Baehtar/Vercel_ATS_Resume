@@ -5,6 +5,7 @@ import { useState } from "react";
 import { INTERVIEW_QUESTIONS, type PrepQuestion } from "@/lib/prepDb";
 import type { Resume } from "@/lib/types";
 import InterviewStoryCard from "./InterviewStoryCard";
+import InterviewPrepGuide from "./InterviewPrepGuide";
 
 function QuestionItem({ q, qi }: { q: PrepQuestion; qi: number }) {
   const [showHint, setShowHint] = useState(false);
@@ -80,6 +81,7 @@ export default function PrepTab({ resume, targetRole }: { resume: Resume; target
 
       {/* ── Personalised story section ─────────────────────────────────── */}
       <InterviewStoryCard resume={resume} targetRole={targetRole} />
+      <InterviewPrepGuide resume={resume} targetRole={targetRole} />
 
       <hr />
 

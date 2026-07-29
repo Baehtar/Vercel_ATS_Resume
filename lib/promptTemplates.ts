@@ -1,9 +1,10 @@
-export type PromptKey = "experience" | "summary" | "story" | "experience_package";
+export type PromptKey = "experience" | "summary" | "story" | "interview_prep" | "experience_package";
 
 export const PROMPT_LABELS: Record<PromptKey, string> = {
   experience: "Experience Bullets",
   summary: "Recruiter Summary",
   story: "Interview Story",
+  interview_prep: "Interview Prep Questions",
   experience_package: "Combined Experience Package",
 };
 
@@ -80,6 +81,133 @@ Writing rules:
 - Do not overload the introduction with every tool in the resume.
 - Include a difficult area only when the resume provides evidence for it; otherwise return an empty array.
 - Return all keys even when the resume lacks enough information; use an empty string or empty array.` ,
+  interview_prep: `You are a Senior Technical Interviewer, Hiring Manager, Resume Analyst, Career Coach, and Interview Preparation Expert.
+
+Your task is to convert the candidate's uploaded resume into a realistic, resume-specific interview preparation guide for a {{label}} role, focused on {{storyDiscipline}} work.
+
+Read the resume line by line, including the professional summary, work experience, titles, responsibilities, projects, skills, tools, education, certifications, achievements, role transitions, gaps, metrics, and business-impact claims.
+
+Generate questions that could realistically be asked from the resume. Cover introductions, every major work-experience claim, every project, each major skill or tool, practical implementation, troubleshooting, workplace scenarios, business understanding, behavioural and HR questions, job-title challenges, achievement metrics, team collaboration, daily responsibilities, architecture or workflow, mistakes, performance, testing, validation, security, monitoring, and pressure cross-questioning.
+
+Answer rules:
+- Write answers in first person, as if the candidate is speaking in an interview.
+- Use the candidate's real companies, projects, tools, responsibilities, numbers, and resume wording where available.
+- Do not invent companies, clients, tools, responsibilities, achievements, metrics, or business impact.
+- If an answer needs information missing from the resume, say what the candidate should prepare instead of fabricating it.
+- Clearly distinguish personal contribution from team contribution.
+- Keep answers natural, practical, confident, and easy to remember.
+- Avoid generic textbook explanations unless tied directly to the candidate's resume.
+- For important resume points, include basic, practical follow-up, and deep cross-questioning angles.
+
+Return ONLY valid JSON. Do not include markdown, headings outside JSON, tables, code fences, or any text before or after the JSON.
+
+Use exactly this JSON structure:
+{
+  "risk_analysis": {
+    "strongest_resume_areas": ["..."],
+    "weakest_or_least_defendable_areas": ["..."],
+    "claims_likely_to_be_challenged": ["..."],
+    "missing_details_to_prepare": ["..."]
+  },
+  "introductions": {
+    "thirty_second": "...",
+    "sixty_to_ninety_second": "...",
+    "walk_me_through_resume": "..."
+  },
+  "most_important_questions": [
+    {
+      "question": "...",
+      "why_interviewer_may_ask": "...",
+      "resume_connection": "...",
+      "best_interview_answer": "...",
+      "likely_follow_up_question": "...",
+      "suggested_follow_up_answer": "...",
+      "mistake_to_avoid": "..."
+    }
+  ],
+  "line_by_line_questions": [
+    {
+      "resume_statement": "...",
+      "interview_question": "...",
+      "practical_answer": "...",
+      "cross_question": "...",
+      "cross_question_answer": "..."
+    }
+  ],
+  "project_deep_dives": [
+    {
+      "project_name": "...",
+      "overview": "...",
+      "questions": [
+        {
+          "question": "...",
+          "answer": "...",
+          "follow_up_question": "...",
+          "follow_up_answer": "..."
+        }
+      ]
+    }
+  ],
+  "technical_skill_questions": [
+    {
+      "skill": "...",
+      "questions": [
+        {
+          "level": "Basic | Intermediate | Advanced | Practical | Scenario | Troubleshooting",
+          "question": "...",
+          "answer": "...",
+          "exercise": "..."
+        }
+      ]
+    }
+  ],
+  "workplace_scenarios": [
+    {
+      "scenario": "...",
+      "answer": "..."
+    }
+  ],
+  "behavioral_hr_questions": [
+    {
+      "question": "...",
+      "answer": "..."
+    }
+  ],
+  "rapid_fire": [
+    {
+      "question": "...",
+      "answer": "..."
+    }
+  ],
+  "cross_questioning_round": [
+    {
+      "question": "...",
+      "safe_response": "..."
+    }
+  ],
+  "missing_information": [
+    {
+      "item": "...",
+      "question": "..."
+    }
+  ],
+  "final_preparation_sheet": {
+    "top_answers_to_memorise": ["..."],
+    "technical_concepts_to_revise": ["..."],
+    "project_stories_to_prepare": ["..."],
+    "weak_areas_to_handle": ["..."],
+    "interviewer_follow_up_questions": ["..."],
+    "one_day_revision_plan": ["..."],
+    "final_confidence_checklist": ["..."]
+  }
+}
+
+Coverage target:
+- Create 25-30 most important questions when resume detail is sufficient.
+- Create line-by-line questions for every major responsibility, project, skill, achievement, and certification.
+- Create at least 25 rapid-fire questions.
+- Keep each answer concise enough to speak, but specific enough to defend.
+- Return all keys even when information is missing; use empty arrays only when the resume truly lacks that section.`,
   experience_package: `You are an expert {{discipline}} Resume Writer. Transform the information below into realistic, ATS-friendly experience content for a {{label}} role.
 
 Return only valid JSON with keys: summary, bullets, project_story. bullets must be an array of 8-12 strings. Use real responsibilities, tools, and domain context. Do not invent impossible achievements.`,
