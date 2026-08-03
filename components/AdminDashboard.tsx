@@ -226,9 +226,6 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => void })
         <>
           <div className="panel" style={{ marginBottom: 16 }}>
             <h3 style={{ marginTop: 0 }}>Shortlisted Resume Dump</h3>
-            <p className="caption" style={{ marginBottom: 0 }}>
-              Resumes flagged here are stored for future AI training. Adding a resume records the shortlist decision; it does not train anything yet.
-            </p>
           </div>
           {shortlistError && <div className="alert alert-error">Could not load shortlist: {shortlistError}</div>}
           <div className="admin-table-wrap">

@@ -203,7 +203,6 @@ export default function Home() {
               Welcome, {userName}
             </h1>
           </div>
-          <div className="student-dashboard-pill">Resume builder | Job listings | Interview prep</div>
         </div>
 
         <div className="tabs">
