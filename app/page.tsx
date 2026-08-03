@@ -203,7 +203,7 @@ export default function Home() {
               Welcome, {userName}
             </h1>
           </div>
-          <div className="student-dashboard-pill">Resume readiness | Job alignment | Interview prep</div>
+          <div className="student-dashboard-pill">Resume builder | Job listings | Interview prep</div>
         </div>
 
         <div className="tabs">
@@ -211,13 +211,13 @@ export default function Home() {
             className={`tab ${activeTab === "cv" ? "active" : ""}`}
             onClick={() => setActiveTab("cv")}
           >
-            Resume Readiness
+            Resume Builder
           </button>
           <button
             className={`tab ${activeTab === "jobs" ? "active" : ""}`}
             onClick={() => setActiveTab("jobs")}
           >
-            Job Alignment
+            Job Listings
           </button>
           <button
             className={`tab ${activeTab === "prep" ? "active" : ""}`}

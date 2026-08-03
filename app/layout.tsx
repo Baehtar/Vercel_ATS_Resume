@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ConsoleFlare Career Readiness Platform",
-  description: "Resume readiness, job alignment, and interview preparation for students.",
+  description: "Resume builder, job listings, and interview preparation for students.",
 };
 
 export const viewport = {

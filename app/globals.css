@@ -60,6 +60,7 @@
   --panel:        var(--white);
   --panel-2:      var(--gray-100);
   --panel-3:      var(--gray-200);
+  --premium-white: var(--gray-900);
   --border:       rgba(54, 65, 83, 0.14);
   --border-hover: rgba(54, 65, 83, 0.30);
   --text:         var(--gray-900);
