@@ -1,9 +1,8 @@
-// components/Auth.tsx - Sign in / sign up / forgot + reset password / demo mode
+// components/Auth.tsx - Sign in / sign up / forgot + reset password
 "use client";
 
 import { useEffect, useState } from "react";
 import {
-  isConfigured,
   signInStudent,
   signUpStudent,
   resetPasswordStudent,
@@ -29,7 +28,6 @@ interface Props {
 type Msg = { kind: "success" | "error" | "warning" | "info"; text: string } | null;
 
 export default function Auth({ onLogin }: Props) {
-  const ready = isConfigured();
   const [isRecovery, setIsRecovery] = useState(false);
   const [activeTab, setActiveTab] = useState<"in" | "up">("in");
   const [busy, setBusy] = useState(false);
@@ -92,18 +90,6 @@ export default function Auth({ onLogin }: Props) {
 
   const clearQuery = () => {
     window.history.replaceState({}, "", window.location.pathname);
-  };
-
-  const enterDemo = () => {
-    onLogin({
-      id: "demo-user",
-      email: "student@demo.com",
-      user_metadata: {
-        name: "Demo Student",
-        batch: "Data Science Fellowship - Jan 2026",
-        course: "Data Engineer",
-      },
-    });
   };
 
   const doLogin = async () => {
@@ -210,7 +196,7 @@ export default function Auth({ onLogin }: Props) {
           style={{ height: 56, width: "auto" }}
         />
       </div>
-      <p className="center muted">Sign in to access your ATS Resume Builder &amp; Career Tools</p>
+      <p className="center muted">Sign in to access your career readiness workspace</p>
 
       {msg && <div className={`alert alert-${msg.kind}`}>{msg.text}</div>}
 
@@ -247,18 +233,6 @@ export default function Auth({ onLogin }: Props) {
               Back to Sign In
             </button>
           </div>
-        </div>
-      ) : !ready ? (
-        <div className="panel">
-          <div className="alert alert-warning">Supabase Connection Pending</div>
-          <p className="caption">
-            Set <code>NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-            <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in your environment (see{" "}
-            <code>.env.local.example</code>) to activate authentication.
-          </p>
-          <button className="primary full" onClick={enterDemo}>
-            Enter Demo Mode (Skip Auth)
-          </button>
         </div>
       ) : (
         <div className="panel">

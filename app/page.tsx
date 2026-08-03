@@ -11,8 +11,6 @@ import {
 } from "@/lib/supabaseClient";
 import {
   getEmptySchema,
-  getDefaultSample,
-  getIdealTemplate,
 } from "@/lib/resumeTemplates";
 import Auth from "@/components/Auth";
 import Sidebar from "@/components/Sidebar";
@@ -106,15 +104,13 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      if (user.id !== "demo-user") {
-        const r = await getUserRole(user.id);
-        setRole(r);
-        if (r !== "admin" && !resumeLoadedFromDb) {
-          const dbResume = await loadResume(user.id);
-          if (dbResume) {
-            setResume(dbResume);
-            notify("CV loaded from Supabase");
-          }
+      const r = await getUserRole(user.id);
+      setRole(r);
+      if (r !== "admin" && !resumeLoadedFromDb) {
+        const dbResume = await loadResume(user.id);
+        if (dbResume) {
+          setResume(dbResume);
+          notify("CV loaded from cloud");
         }
       }
       setResumeLoadedFromDb(true);
@@ -191,25 +187,23 @@ export default function Home() {
         resume={resume}
         targetRole={targetRole}
         onTargetRoleChange={setTargetRole}
-        onLoadSample={() => {
-          setResume(getDefaultSample());
-          notify("Sample resume loaded");
-        }}
         onClear={() => {
           setResume(getEmptySchema());
           notify("Resume cleared");
-        }}
-        onIdeal={() => {
-          setResume(getIdealTemplate(targetRole));
-          notify("Ideal resume template created");
         }}
         onSignOut={handleSignOut}
         notify={notify}
       />
 
       <main className="main">
-        <div style={{ color: "var(--premium-white)", fontSize: "1.1rem", marginBottom: 4 }}>
-          Hello {userName}
+        <div className="student-dashboard-header">
+          <div>
+            <p className="caption" style={{ margin: "0 0 4px" }}>Career Readiness Dashboard</p>
+            <h1 style={{ margin: 0, color: "var(--premium-white)", fontSize: "1.35rem" }}>
+              Welcome, {userName}
+            </h1>
+          </div>
+          <div className="student-dashboard-pill">Resume readiness | Job alignment | Interview prep</div>
         </div>
 
         <div className="tabs">
@@ -217,13 +211,13 @@ export default function Home() {
             className={`tab ${activeTab === "cv" ? "active" : ""}`}
             onClick={() => setActiveTab("cv")}
           >
-            My CV
+            Resume Readiness
           </button>
           <button
             className={`tab ${activeTab === "jobs" ? "active" : ""}`}
             onClick={() => setActiveTab("jobs")}
           >
-            Job Openings
+            Job Alignment
           </button>
           <button
             className={`tab ${activeTab === "prep" ? "active" : ""}`}

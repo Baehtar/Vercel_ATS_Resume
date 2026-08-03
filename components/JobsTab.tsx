@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MOCK_JOB_LISTINGS } from "@/lib/jobDb";
 import { sortJobsByNewest } from "@/lib/jobSort";
 
 interface Job {
@@ -27,34 +26,35 @@ function JobCard({ job }: { job: Job }) {
 
   return (
     <div className="job-card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
         <div>
           <h3 style={{ margin: "0 0 4px 0" }}>{job.title}</h3>
           <p style={{ margin: 0, color: "var(--text-muted)" }}>
             Company: {job.company}&nbsp;|&nbsp;Location: {job.location}&nbsp;|&nbsp;Salary: {job.salary_range}
           </p>
         </div>
-        <div style={{ textAlign: "right" }}>
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
           <small className="muted">Posted: {job.posted}</small><br />
           <small className="muted">{job.experience}</small>
         </div>
       </div>
+
       <div style={{ marginTop: 8 }}>
-        {(job.tags || []).map((t) => (
-          <span key={t} className="job-tag">{t}</span>
+        {(job.tags || []).map((tag) => (
+          <span key={tag} className="job-tag">{tag}</span>
         ))}
       </div>
 
       <div style={{ marginTop: 12 }}>
         <button
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen((value) => !value)}
           style={{ padding: "6px 14px", fontSize: "0.85rem" }}
         >
-          {open ? "Hide Description" : `View — ${job.title} at ${job.company}`}
+          {open ? "Hide Description" : `View - ${job.title} at ${job.company}`}
         </button>
 
         {open && (
-          <div className="expander-body" style={{ marginTop: 10, background: "var(--panel-2)", borderRadius: 10, padding: 16 }}>
+          <div className="expander-body" style={{ marginTop: 10, background: "var(--panel-2)", borderRadius: 8, padding: 16 }}>
             <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0, fontSize: "0.9rem" }}>
               {job.description}
             </pre>
@@ -74,21 +74,19 @@ export default function JobsTab() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usingMock, setUsingMock] = useState(false);
   const [roleFilter, setRoleFilter] = useState("All");
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/jobs");
-        const data = await res.json();
+        const response = await fetch("/api/jobs");
+        const data = await response.json();
 
         if (data.jobs && data.jobs.length > 0) {
           const sortedJobs = sortJobsByNewest(data.jobs as Job[]);
           setJobs(sortedJobs);
-          setUsingMock(false);
-          // Show when the most recent listing was fetched
+
           const latest = sortedJobs.reduce<string | null>((mostRecent, job) => {
             if (!job.fetched_at) return mostRecent;
             if (!mostRecent) return job.fetched_at;
@@ -96,31 +94,25 @@ export default function JobsTab() {
               ? job.fetched_at
               : mostRecent;
           }, null);
+
           if (latest) {
             setLastRefreshed(
               new Date(latest).toLocaleDateString("en-IN", {
-                day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
               })
             );
           }
         } else {
-          // Fall back to mock data if Supabase is empty or not yet seeded
-          setJobs(
-            sortJobsByNewest(MOCK_JOB_LISTINGS.map((j) => ({
-              ...j,
-              id: String(j.id),
-              role_type: j.role_type,
-            })))
-          );
-          setUsingMock(true);
+          setJobs([]);
           if (data.error) setError(data.error);
         }
-      } catch (e) {
-        setJobs(sortJobsByNewest(
-          MOCK_JOB_LISTINGS.map((j) => ({ ...j, id: String(j.id), role_type: j.role_type }))
-        ));
-        setUsingMock(true);
-        setError(e instanceof Error ? e.message : String(e));
+      } catch (err) {
+        setJobs([]);
+        setError(err instanceof Error ? err.message : String(err));
       } finally {
         setLoading(false);
       }
@@ -130,13 +122,16 @@ export default function JobsTab() {
   const filtered =
     roleFilter === "All"
       ? jobs
-      : jobs.filter((j) => {
-          if (roleFilter === "Data Engineer")
-            return j.role_type === "data_engineer" || j.title.toLowerCase().includes("data engineer");
-          if (roleFilter === "Data Analyst")
-            return j.role_type === "data_analyst" || j.title.toLowerCase().includes("data analyst");
-          if (roleFilter === "Big Data Engineer")
-            return j.title.toLowerCase().includes("big data");
+      : jobs.filter((job) => {
+          if (roleFilter === "Data Engineer") {
+            return job.role_type === "data_engineer" || job.title.toLowerCase().includes("data engineer");
+          }
+          if (roleFilter === "Data Analyst") {
+            return job.role_type === "data_analyst" || job.title.toLowerCase().includes("data analyst");
+          }
+          if (roleFilter === "Big Data Engineer") {
+            return job.title.toLowerCase().includes("big data");
+          }
           return true;
         });
 
@@ -145,11 +140,7 @@ export default function JobsTab() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
         <div>
           <h2 style={{ margin: 0 }}>Job Openings</h2>
-          <p className="caption">
-            {usingMock
-              ? "Showing sample listings — live listings load after first daily refresh."
-              : `Live listings refreshed daily · Last updated: ${lastRefreshed || "recently"}`}
-          </p>
+          <p className="caption">Live listings refreshed daily. Last updated: {lastRefreshed || "recently"}</p>
         </div>
       </div>
 
@@ -159,34 +150,31 @@ export default function JobsTab() {
         </div>
       )}
 
-      {/* Filter */}
-      <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "12px 0" }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "12px 0", flexWrap: "wrap" }}>
         <label className="field-label" style={{ margin: 0 }}>Filter:</label>
-        {["All", "Data Engineer", "Data Analyst", "Big Data Engineer"].map((opt) => (
+        {["All", "Data Engineer", "Data Analyst", "Big Data Engineer"].map((option) => (
           <button
-            key={opt}
-            className={roleFilter === opt ? "primary" : ""}
+            key={option}
+            className={roleFilter === option ? "primary" : ""}
             style={{ padding: "6px 14px" }}
-            onClick={() => setRoleFilter(opt)}
+            onClick={() => setRoleFilter(option)}
           >
-            {opt}
+            {option}
           </button>
         ))}
         <span className="caption" style={{ marginLeft: "auto" }}>
-          {loading ? "Loading…" : `${filtered.length} listings`}
+          {loading ? "Loading..." : `${filtered.length} listings`}
         </span>
       </div>
 
       <hr />
 
       {loading ? (
-        <p className="muted"><span className="spinner" />Loading job listings…</p>
+        <p className="muted"><span className="spinner" />Loading job listings...</p>
       ) : filtered.length === 0 ? (
-        <div className="alert alert-info">No listings for this filter.</div>
+        <div className="alert alert-info">No current openings available for this filter.</div>
       ) : (
-        filtered.map((job) => (
-          <JobCard key={job.id} job={job} />
-        ))
+        filtered.map((job) => <JobCard key={job.id} job={job} />)
       )}
     </div>
   );

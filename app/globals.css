@@ -232,6 +232,41 @@ button.theme-toggle-btn:focus {
   background: radial-gradient(ellipse at top left, rgba(21, 93, 252, 0.05) 0%, transparent 60%);
 }
 
+.student-dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.student-dashboard-pill {
+  max-width: 420px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--premium-white);
+  background: var(--panel);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .student-dashboard-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .student-dashboard-pill {
+    max-width: none;
+    width: 100%;
+    text-align: left;
+  }
+}
+
 .muted {
   color: var(--text-muted);
 }

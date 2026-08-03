@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Console Flare — ATS Resume Builder & Interview Prep",
-  description: "Your launchpad to data science careers.",
+  title: "ConsoleFlare Career Readiness Platform",
+  description: "Resume readiness, job alignment, and interview preparation for students.",
 };
 
 export const viewport = {

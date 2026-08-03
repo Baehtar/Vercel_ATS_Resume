@@ -12,9 +12,7 @@ interface Props {
   resume: Resume;
   targetRole: string;
   onTargetRoleChange: (role: string) => void;
-  onLoadSample: () => void;
   onClear: () => void;
-  onIdeal: () => void;
   onSignOut: () => void;
   notify: (text: string) => void;
   className?: string;
@@ -26,9 +24,7 @@ export default function Sidebar({
   resume,
   targetRole,
   onTargetRoleChange,
-  onLoadSample,
   onClear,
-  onIdeal,
   onSignOut,
   notify,
   className,
@@ -40,7 +36,6 @@ export default function Sidebar({
   );
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const isDemo = user.id === "demo-user";
 
   const doSave = async () => {
     setSaving(true);
@@ -86,31 +81,19 @@ export default function Sidebar({
 
       <hr />
       <h4>Resume Data</h4>
-      <div className="btn-row">
-        <button onClick={onLoadSample}>Load Sample</button>
-        <button className="primary" onClick={onClear}>
-          Clear All
-        </button>
-      </div>
-      <button className="full" style={{ marginTop: 8 }} onClick={onIdeal}>
-        Create Ideal Resume Template
+      <button className="full" onClick={onClear}>
+        Clear Resume
       </button>
 
       <hr />
       <h4>Cloud Storage</h4>
-      {isDemo ? (
-        <div className="alert alert-warning">Running in Demo Mode. Cloud saving is disabled.</div>
-      ) : (
-        <>
-          <button className="primary full" onClick={doSave} disabled={saving}>
-            {saving && <span className="spinner" />}Save Resume to Cloud
-          </button>
-          {saveMsg && (
-            <div className={`alert ${saveMsg.ok ? "alert-success" : "alert-error"}`}>
-              {saveMsg.text}
-            </div>
-          )}
-        </>
+      <button className="primary full" onClick={doSave} disabled={saving}>
+        {saving && <span className="spinner" />}Save Resume to Cloud
+      </button>
+      {saveMsg && (
+        <div className={`alert ${saveMsg.ok ? "alert-success" : "alert-error"}`}>
+          {saveMsg.text}
+        </div>
       )}
 
       <hr />
