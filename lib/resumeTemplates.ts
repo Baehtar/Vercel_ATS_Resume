@@ -31,6 +31,101 @@ function _safe(value: unknown): string {
     .replace(/'/g, "&#x27;");
 }
 
+const _importantResumeTerms = [
+  "SQL", "Python", "JavaScript", "TypeScript", "Java", "C#", "C++", "Go", "R",
+  "React", "Next.js", "Node.js", "Express", "Angular", "Vue", "HTML", "CSS",
+  "Power BI", "Tableau", "Looker", "Excel", "DAX", "DAX Measures", "Power Query", "Pandas", "NumPy",
+  "Apache Spark", "PySpark", "Apache Kafka", "Airflow", "Databricks", "Azure Databricks", "Azure Data Factory", "Snowflake", "dbt",
+  "PostgreSQL", "MySQL", "SQL Server", "MongoDB", "Redis", "DynamoDB", "AWS", "Azure",
+  "GCP", "Docker", "Kubernetes", "Terraform", "Git", "GitHub", "GitLab", "CI/CD",
+  "ETL", "ELT", "REST API", "REST APIs", "GraphQL", "API", "APIs", "Data Engineering", "Data Pipeline", "Data Pipelines",
+  "Data Analytics", "Business Intelligence", "Machine Learning", "Deep Learning", "NLP",
+  "TensorFlow", "PyTorch", "Data Warehouse", "Data Lake", "Data Modeling", "Data Quality", "Star Schema", "Medallion Architecture",
+  "Incremental Loading", "Window Functions", "CTEs", "Data Visualization", "KPI Reporting", "Cloud Infrastructure",
+];
+
+const _leadingActionVerbs = [
+  "built", "created", "designed", "developed", "engineered", "implemented", "automated",
+  "analyzed", "optimized", "processed", "orchestrated", "deployed", "led", "managed",
+  "delivered", "integrated", "migrated", "reduced", "improved", "developed", "configured",
+];
+
+function _isAlphaNumeric(value: string | undefined): boolean {
+  return Boolean(value && /[A-Za-z0-9]/.test(value));
+}
+
+/**
+ * Add restrained emphasis to recruiter-relevant resume content while keeping
+ * the underlying document as selectable, ATS-readable text.
+ */
+function _highlightResumeText(
+  value: unknown,
+  terms: string[] = [],
+  highlightLeadingVerb = false
+): string {
+  if (value === null || value === undefined || value === "") return "";
+  const text = String(value);
+  const lowerText = text.toLowerCase();
+  const ranges: Array<[number, number]> = [];
+  const candidates = Array.from(new Set([..._importantResumeTerms, ...terms]))
+    .map((term) => term.trim())
+    .filter((term) => term.length >= 2)
+    .sort((a, b) => b.length - a.length);
+
+  for (const term of candidates) {
+    const lowerTerm = term.toLowerCase();
+    let start = lowerText.indexOf(lowerTerm);
+    while (start !== -1) {
+      const end = start + term.length;
+      const before = text[start - 1];
+      const after = text[end];
+      const validStart = !_isAlphaNumeric(before) || !_isAlphaNumeric(term[0]);
+      const validEnd = !_isAlphaNumeric(after) || !_isAlphaNumeric(term[term.length - 1]);
+      if (validStart && validEnd) ranges.push([start, end]);
+      start = lowerText.indexOf(lowerTerm, start + 1);
+    }
+  }
+
+  const metricPattern = /(?:[$\u20AC\u00A3]\s?\d[\d,.]*(?:\+)?(?:\s?(?:[KMB]|million|billion|thousand))?|\b\d[\d,.]*(?:\+|%|x|[KMB]\+?)(?:\s?(?:GB|TB|MB|hours?|days?|months?|years?|records?|users?|requests?|incidents?|minutes?|ms|seconds?))?|\b\d[\d,.]*\s+(?:million|billion|thousand|hours?|days?|months?|years?|records?|users?|requests?|incidents?|minutes?))/gi;
+  for (const match of text.matchAll(metricPattern)) {
+    if (match.index !== undefined) ranges.push([match.index, match.index + match[0].length]);
+  }
+
+  if (highlightLeadingVerb) {
+    const verbPattern = new RegExp(`^\\s*(${_leadingActionVerbs.join("|")})\\b`, "i");
+    const match = text.match(verbPattern);
+    if (match && match.index !== undefined) {
+      const start = text.indexOf(match[1], match.index);
+      ranges.push([start, start + match[1].length]);
+    }
+  }
+
+  if (!ranges.length) return _safe(text);
+  ranges.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+  const merged: Array<[number, number]> = [];
+  for (const [start, end] of ranges) {
+    const previous = merged[merged.length - 1];
+    if (previous && start <= previous[1]) previous[1] = Math.max(previous[1], end);
+    else merged.push([start, end]);
+  }
+
+  let html = "";
+  let cursor = 0;
+  for (const [start, end] of merged) {
+    html += _safe(text.slice(cursor, start));
+    html += `<strong>${_safe(text.slice(start, end))}</strong>`;
+    cursor = end;
+  }
+  return html + _safe(text.slice(cursor));
+}
+
+function _resumeHighlightTerms(data: Resume): string[] {
+  const skills = (data.skills || []).flatMap((skill) => [skill.category, ...skill.list.split(/[,;|\n]+/)]);
+  const projectTech = (data.projects || []).flatMap((project) => project.tech.split(/[,;|\n]+/));
+  const headline = (data.personal?.headline || "").split(/[|,;]+/);
+  return [...skills, ...projectTech, ...headline].map((term) => term.trim()).filter(Boolean);
+}
+
 /** Ensure a link has exactly one https:// prefix. */
 function _normalizeUrl(link: string): string {
   if (!link) return "";
@@ -330,6 +425,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
   const projects = data.projects || [];
   const skills = data.skills || [];
   const certifications = data.certifications || [];
+  const highlightTerms = _resumeHighlightTerms(data);
 
   // Contact items
   const contactParts: string[] = [];
@@ -350,7 +446,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
       .map((exp) => {
         const bulletsHtml = (exp.bullets || [])
           .filter((b) => b.trim())
-          .map((b) => `<li>${_safe(b)}</li>`)
+          .map((b) => `<li>${_highlightResumeText(b, highlightTerms, true)}</li>`)
           .join("");
         const bulletsList = bulletsHtml
           ? `<ul class="resume-bullets">${bulletsHtml}</ul>`
@@ -363,7 +459,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                             <td class="item-date" align="right">${_safe(exp.startDate)} – ${_safe(exp.endDate)}</td>
                         </tr>
                         <tr>
-                            <td class="role-title"><em>${_safe(exp.role)}</em></td>
+                            <td class="role-title"><strong><em>${_safe(exp.role)}</em></strong></td>
                             <td class="item-location" align="right">${_safe(exp.location)}</td>
                         </tr>
                     </table>
@@ -386,7 +482,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
     const eduItems = education
       .map((edu) => {
         const detailsHtml = edu.details
-          ? `<p class="edu-details">${_safe(edu.details)}</p>`
+          ? `<p class="edu-details">${_highlightResumeText(edu.details, highlightTerms)}</p>`
           : "";
         return `
                 <div class="resume-item">
@@ -396,7 +492,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                             <td class="item-date" align="right">${_safe(edu.date)}</td>
                         </tr>
                         <tr>
-                            <td class="degree-title"><em>${_safe(edu.degree)}</em></td>
+                            <td class="degree-title"><strong><em>${_safe(edu.degree)}</em></strong></td>
                             <td class="item-location" align="right">${_safe(edu.location)}</td>
                         </tr>
                     </table>
@@ -419,7 +515,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
     const projItems = projects
       .map((proj) => {
         const techSpan = proj.tech
-          ? `<span class="project-tech">[${_safe(proj.tech)}]</span>`
+          ? `<span class="project-tech">[${_highlightResumeText(proj.tech, highlightTerms)}]</span>`
           : "";
         let linkHtml = "";
         if (proj.link) {
@@ -434,7 +530,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
                             <td class="project-link" align="right">${linkHtml}</td>
                         </tr>
                     </table>
-                    <p class="project-desc">${_safe(proj.description)}</p>
+                    <p class="project-desc">${_highlightResumeText(proj.description, highlightTerms)}</p>
                 </div>`;
       })
       .join("");
@@ -457,7 +553,7 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
       .map(
         (s) => `
                 <div class="skill-category-row">
-                    <strong>${_safe(s.category)}:</strong> ${_safe(s.list)}
+                    <strong>${_safe(s.category)}:</strong> ${_highlightResumeText(s.list, highlightTerms)}
                 </div>`
       )
       .join("");
@@ -497,11 +593,11 @@ export function generateResumeHtml(data: Resume, templateId: string): string {
   let summaryHtml = "";
   let summaryInner = "";
   if (summary.trim()) {
-    summaryInner = `<p class="summary-text">${_safe(summary)}</p>`;
+    summaryInner = `<p class="summary-text">${_highlightResumeText(summary, highlightTerms)}</p>`;
     summaryHtml = `
             <div class="resume-section">
                 <h2 class="section-title">SUMMARY</h2>
-                <p class="summary-text">${_safe(summary)}</p>
+                <p class="summary-text">${_highlightResumeText(summary, highlightTerms)}</p>
             </div>`;
   }
 
